@@ -1,0 +1,45 @@
+@model List<HelpDesk.Shared.DTOs.CategoryDto>
+@{
+    ViewData["Title"] = "Categories";
+
+    var icons = new (string Icon, string Bg, string Color)[]
+    {
+        ("fa-regular fa-folder-open", "#EFF6FF", "#3B82F6"),
+        ("fa-regular fa-folder-open", "#F3E8FF", "#9333EA"),
+        ("fa-regular fa-folder-open", "#DCFCE7", "#16A34A"),
+        ("fa-regular fa-folder-open", "#FFEDD5", "#F97316"),
+        ("fa-regular fa-folder-open", "#FCE7F3", "#DB2777"),
+        ("fa-regular fa-folder-open", "#F1F5F9", "#64748B")
+    };
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Categories</h1>
+        <p class="page-subtitle">Manage ticket categories and organization.</p>
+    </div>
+    <button class="btn btn-primary">Add Category</button>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
+    @for (int i = 0; i < Model.Count; i++)
+    {
+        var cat = Model[i];
+        var style = icons[i % icons.Length];
+
+        <div class="card card make-div-auto">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                <div style="width:44px; height:44px; border-radius:10px; background:@style.Bg; color:@style.Color; display:flex; align-items:center; justify-content:center; font-size:18px;">
+                    <i class="@style.Icon"></i>
+                </div>
+                <i class="fa-solid fa-gear" style="color:var(--text-gray); cursor:pointer;"></i>
+            </div>
+            <div style="font-weight:700; font-size:17px; margin-bottom:4px;">@cat.Name</div>
+            <div style="color:var(--text-gray); font-size:14px; margin-bottom:16px;">@cat.Description</div>
+            <div style="display:flex; justify-content:space-between; padding-top:14px; border-top:1px solid var(--border);">
+                <span style="color:var(--text-gray); font-size:14px;">Active Tickets</span>
+                <span style="font-weight:700;">@cat.ActiveTicketCount</span>
+            </div>
+        </div>
+    }
+</div>
