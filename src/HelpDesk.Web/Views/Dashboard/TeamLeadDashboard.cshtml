@@ -1,0 +1,199 @@
+@model HelpDesk.Web.Models.TeamLeadDashboardViewModel
+@{
+    ViewData["Title"] = "Team Lead Dashboard";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Team Lead Dashboard</h1>
+        <p class="page-subtitle">Welcome back, @Model.TeamLeadFirstName. Here's your team's status.</p>
+    </div>
+    <div style="text-align:right; color:var(--text-gray); font-size:13px;">
+        <div style="font-weight:600; color:var(--text-dark); font-size:15px;">@DateTime.Now.ToString("HH:mm")</div>
+        <div>@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+    </div>
+  
+</div>
+
+<div class="stats-row">
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#EF4444;">
+        <div>
+            <div class="stat-label">Unassigned Tickets</div>
+            <div class="stat-value">@Model.UnassignedCount</div>
+        </div>
+        <div class="stat-icon red"><i class="fa-solid fa-inbox"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#3B82F6;">
+        <div>
+            <div class="stat-label">Team Open Tickets</div>
+            <div class="stat-value">@Model.TeamOpenTickets</div>
+        </div>
+        <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#EF4444;">
+        <div>
+            <div class="stat-label">SLA Breaches This Week</div>
+            <div class="stat-value" style="color:var(--red);">@Model.SlaBreachesThisWeek</div>
+        </div>
+        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#16A34A;">
+        <div>
+            <div class="stat-label">Avg Resolution Time</div>
+            <div class="stat-value">@Model.AvgResolutionHours hrs</div>
+        </div>
+        <div class="stat-icon green"><i class="fa-solid fa-clock"></i></div>
+    </div>
+</div>
+
+<div class="card make-div-auto">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+            <div class="card-title">Needs Assignment</div>
+            <div class="card-subtitle">Sorted by priority — critical tickets first</div>
+        </div>
+        <a asp-controller="Tickets" asp-action="UnassignedQueue" class="ticket-link">View all →</a>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Priority</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Submitted By</th>
+                <th>Time Open</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ticket in Model.UnassignedTickets)
+            {
+                <tr>
+                    <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
+                    <td>
+                        <div style="font-weight:600;">@ticket.Title</div>
+                        <div style="color:var(--text-gray); font-size:12px;">@ticket.TicketNumber</div>
+                    </td>
+                    <td>@ticket.Category</td>
+                    <td>@ticket.SubmittedBy</td>
+                    <td>@ticket.TimeOpen</td>
+                    <td style="white-space:nowrap; padding-right:24px;">
+                        <div style="display:inline-block; position:relative;">
+                            <button type="button" class="btn btn-primary" onclick="toggleAssignDropdown('@ticket.Id')">
+                                Assign to Technician <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                            </button>
+                            <div id="dropdown-@ticket.Id" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); z-index:100; min-width:220px; overflow:hidden;">
+                                <form asp-action="AssignToMe" asp-route-id="@ticket.Id" method="post">
+                                    <button type="submit"
+                                            style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border); font-weight:600; color:var(--blue);"
+                                            onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                        <span><i class="fa-regular fa-user" style="margin-right:8px;"></i>Assign to Me</span>
+                                    </button>
+                                </form>
+                                <form asp-action="AssignToTechnician" asp-route-id="@ticket.Id" method="post">
+                                    @foreach (var tech in Model.Technicians)
+                                    {
+                                        <button type="submit" name="technicianId" value="@tech.Id"
+                                                style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border);"
+                                                onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                            <span style="display:flex; align-items:center; gap:8px;">
+                                                <span class="user-avatar" style="width:26px; height:26px; font-size:10px;">
+                                                    @(string.Concat(tech.FirstName.FirstOrDefault(), tech.LastName.FirstOrDefault()).ToString().ToUpper())
+                                                </span>
+                                                @tech.FirstName @tech.LastName
+                                            </span>
+                                            <span style="color:@(tech.OpenTicketCount >= 8 ? "var(--red)" : "var(--text-gray)"); font-size:13px;">
+                                                @tech.OpenTicketCount open
+                                            </span>
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;" class="make-div-auto">
+            <div>
+                <div class="card-title">Team Workload</div>
+                <div class="card-subtitle">Capacity utilisation per technician</div>
+            </div>
+            <a asp-controller="Team" asp-action="Index" class="ticket-link">Full view →</a>
+        </div>
+
+        @foreach (var member in Model.TeamWorkload)
+        {
+            var loadPercent = member.Capacity > 0 ? (member.CurrentLoad * 100 / member.Capacity) : 0;
+            var barClass = loadPercent >= 80 ? "high" : loadPercent >= 50 ? "medium" : "low";
+            var capacityClass = loadPercent >= 100 ? "over" : loadPercent >= 80 ? "warn" : "";
+
+            <div class="workload-row">
+                <div class="workload-avatar-wrap">
+                    <div class="user-avatar" style="width:50px; height:50px; font-size:16px;">@member.Initials</div>
+                    <div class="status-dot @(member.IsOnline ? "online" : "offline")"></div>
+                </div>
+                <div class="workload-info" style="font-size:16px;">
+                    <div class="workload-name" style="display:flex; ">
+                        @member.Name
+                        <div class="workload-stats" style="display:flex;margin-left:30rem;">
+                            <div>@member.ResolvedThisWeek resolved this wk</div>
+                            <div style="margin-left:1rem;" class="capacity @capacityClass">@member.CurrentLoad/@member.Capacity</div>
+                        </div>
+                    </div>
+                    <div class="workload-bar-track">
+                        <div class="workload-bar-fill @barClass" style="width:@(loadPercent)%;"></div>
+                    </div>
+                </div>
+                
+            </div>
+        }
+    </div>
+
+    <div class="card make-div-auto">
+        <div class="card-title">Recent Team Activity</div>
+        <div class="card-subtitle">Live actions from your team</div>
+
+        @foreach (var activity in Model.RecentActivity)
+        {
+            var iconClass = activity.IconType switch
+            {
+                "resolved" => "fa-solid fa-check",
+                "escalated" => "fa-solid fa-arrow-up",
+                "assigned" => "fa-solid fa-user-check",
+                "updated" => "fa-solid fa-pen",
+                "warning" => "fa-solid fa-triangle-exclamation",
+                _ => "fa-solid fa-circle"
+            };
+
+            <div class="activity-row">
+                <div class="activity-icon @activity.IconType"><i class="@iconClass"></i></div>
+                <div>
+                    <div class="activity-message">@activity.Message</div>
+                    <div class="activity-time">@activity.TimeAgo</div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+<script>
+    function toggleAssignDropdown(ticketId) {
+        const dropdown = document.getElementById('dropdown-' + ticketId);
+        document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+            if (d.id !== 'dropdown-' + ticketId) d.style.display = 'none';
+        });
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('[id^="dropdown-"]') && !e.target.closest('button[onclick^="toggleAssignDropdown"]')) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
+        }
+    });
+</script>
