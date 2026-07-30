@@ -12,6 +12,7 @@ builder.Services.AddHttpClient("HelpDeskApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
 });
+builder.Services.AddScoped<HelpDesk.Web.Services.ITicketApiService, HelpDesk.Web.Services.TicketApiService>();
 builder.Services.AddHttpContextAccessor();
 
 // Authentication — Keycloak via OpenID Connect
