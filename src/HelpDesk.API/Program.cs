@@ -45,6 +45,55 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+// Authentication — Keycloak handles realm_access.roles mapping internally
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "http://localhost:8080/realms/helpdesk";
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidIssuer = "http://localhost:8080/realms/helpdesk",
+            ValidateLifetime = true,
+            RoleClaimType = System.Security.Claims.ClaimTypes.Role,
+            NameClaimType = "preferred_username"
+        };
+        options.MapInboundClaims = false;
+
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                var identity = context.Principal?.Identity as System.Security.Claims.ClaimsIdentity;
+                if (identity == null) return Task.CompletedTask;
+
+                var realmAccessClaim = context.Principal?.FindFirst("realm_access");
+                if (realmAccessClaim != null)
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(realmAccessClaim.Value);
+                    if (doc.RootElement.TryGetProperty("roles", out var rolesElement))
+                    {
+                        foreach (var role in rolesElement.EnumerateArray())
+                        {
+                            var roleValue = role.GetString();
+                            if (!string.IsNullOrEmpty(roleValue))
+                            {
+                                identity.AddClaim(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleValue));
+                            }
+                        }
+                    }
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
