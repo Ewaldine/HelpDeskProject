@@ -2,6 +2,9 @@ using HelpDesk.Core.Interfaces.Repositories;
 using HelpDesk.Infrastructure.Data;
 using HelpDesk.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Resources;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,6 +97,25 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
 
 builder.Services.AddAuthorization();
 
+// OpenTelemetry — Traces and Metrics
+var serviceName = "HelpDesk.API";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(serviceName))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = new Uri("http://localhost:4317");
+        }))
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddPrometheusExporter());
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -110,6 +132,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapControllers();
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapPrometheusScrapingEndpoint();
 app.MapControllers();
 
 app.Run();
