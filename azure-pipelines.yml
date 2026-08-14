@@ -41,8 +41,8 @@ stages:
             displayName: 'Run Unit Tests'
             inputs:
               command: 'test'
-              projects: '**/*Tests/*.csproj'
-              arguments: '--configuration $(buildConfiguration) --no-build --logger trx --results-directory $(Agent.TempDirectory)'
+              projects: 'tests/HelpDesk.Tests/HelpDesk.Tests.csproj'
+              arguments: '--configuration $(buildConfiguration) --logger "trx;LogFileName=testresults.trx" --results-directory $(Agent.TempDirectory) -v normal'
             continueOnError: true
 
           - task: PublishTestResults@2
