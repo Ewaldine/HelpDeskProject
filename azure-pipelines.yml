@@ -18,18 +18,22 @@ stages:
       - job: BuildAndTest
         displayName: 'Build, Test, Publish'
         steps:
+
+          # Install .NET 8 SDK
           - task: UseDotNet@2
             displayName: 'Install .NET SDK'
             inputs:
               packageType: 'sdk'
               version: '8.0.x'
 
+          # Restore NuGet packages
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet Packages'
             inputs:
               command: 'restore'
               projects: '**/*.csproj'
 
+          # Build all projects
           - task: DotNetCoreCLI@2
             displayName: 'Build Solution'
             inputs:
@@ -37,21 +41,25 @@ stages:
               projects: '**/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
+          # Build the test project separately
+          - task: DotNetCoreCLI@2
+            displayName: 'Build Test Project'
+            inputs:
+              command: 'build'
+              projects: 'tests/HelpDesk.Tests/HelpDesk.Tests.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # Run unit tests
           - task: DotNetCoreCLI@2
             displayName: 'Run Unit Tests'
             inputs:
               command: 'test'
               projects: 'tests/HelpDesk.Tests/HelpDesk.Tests.csproj'
-              arguments: '--configuration $(buildConfiguration) --logger "trx;LogFileName=testresults.trx" --results-directory $(Agent.TempDirectory) -v normal'
+              arguments: '--configuration $(buildConfiguration) --no-build --logger trx'
+              publishTestResults: true
             continueOnError: true
 
-          - task: PublishTestResults@2
-            displayName: 'Publish Test Results'
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: 'VSTest'
-              testResultsFiles: '$(Agent.TempDirectory)/*.trx'
-
+          # Publish HelpDesk.API
           - task: DotNetCoreCLI@2
             displayName: 'Publish HelpDesk.API'
             inputs:
@@ -61,6 +69,7 @@ stages:
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api --no-build'
               zipAfterPublish: true
 
+          # Publish HelpDesk.Web
           - task: DotNetCoreCLI@2
             displayName: 'Publish HelpDesk.Web'
             inputs:
@@ -70,6 +79,7 @@ stages:
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/web --no-build'
               zipAfterPublish: true
 
+          # Publish build artifacts
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Build Artifacts'
             inputs:
