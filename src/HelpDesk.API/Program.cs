@@ -118,11 +118,11 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<HelpDeskDbContext>();
-    await dbContext.Database.MigrateAsync();
-}
+// using (var scope = app.Services.CreateScope())
+// {
+//     var dbContext = scope.ServiceProvider.GetRequiredService<HelpDeskDbContext>();
+//     await dbContext.Database.MigrateAsync();
+// }
 
 if (app.Environment.IsDevelopment())
 {
