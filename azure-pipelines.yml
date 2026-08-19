@@ -12,6 +12,10 @@ variables:
   solution: 'HelpDesk.sln'
 
 stages:
+
+  # ============================================================
+  # BUILD AND TEST
+  # ============================================================
   - stage: Build
     displayName: 'Build and Test'
     jobs:
@@ -41,7 +45,7 @@ stages:
               projects: '**/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # Build the test project separately
+          # Build test project separately
           - task: DotNetCoreCLI@2
             displayName: 'Build Test Project'
             inputs:
@@ -86,3 +90,61 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)'
               ArtifactName: 'drop'
               publishLocation: 'Container'
+
+
+  # ============================================================
+  # DEPLOY TO AZURE
+  # ============================================================
+  - stage: Deploy
+    displayName: 'Deploy to Azure'
+    dependsOn: Build
+    condition: succeeded()
+
+    jobs:
+
+      # ----------------------------------------------------------
+      # DEPLOY API
+      # ----------------------------------------------------------
+      - deployment: DeployAPI
+        displayName: 'Deploy HelpDesk.API'
+        environment: 'production'
+
+        pool:
+          name: 'Default'
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                - task: AzureWebApp@1
+                  displayName: 'Deploy API to Azure App Service'
+                  inputs:
+                    azureSubscription: 'HelpDesk-Azure-Connection'
+                    appType: 'webAppLinux'
+                    appName: 'helpdesk-api-yourname'
+                    package: '$(Pipeline.Workspace)/drop/api/*.zip'
+
+
+      # ----------------------------------------------------------
+      # DEPLOY WEB
+      # ----------------------------------------------------------
+      - deployment: DeployWeb
+        displayName: 'Deploy HelpDesk.Web'
+        environment: 'production'
+
+        pool:
+          name: 'Default'
+
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+
+                - task: AzureWebApp@1
+                  displayName: 'Deploy Web to Azure App Service'
+                  inputs:
+                    azureSubscription: 'HelpDesk-Azure-Connection'
+                    appType: 'webAppLinux'
+                    appName: 'helpdesk-web-yourname'
+                    package: '$(Pipeline.Workspace)/drop/web/*.zip'
