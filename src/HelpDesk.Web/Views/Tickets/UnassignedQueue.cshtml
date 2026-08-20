@@ -1,0 +1,140 @@
+@model HelpDesk.Web.Models.TicketListViewModel
+@{
+    ViewData["Title"] = "Unassigned Queue";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Unassigned Queue</h1>
+        <p class="page-subtitle">Tickets awaiting technician assignment — sorted by priority.</p>
+    </div>
+</div>
+
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:16px;">
+    <div style="flex:1; position:relative;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-gray); font-size:13px;"></i>
+        <input type="text" id="ticketSearch" placeholder="Search tickets..."
+            style="width:40%; padding:10px 14px 10px 38px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; box-sizing:border-box;" />
+        <button class="btn btn-outline"><i class="fa-solid fa-filter"></i> Filter</button>
+    </div>
+    
+    <span style="color:var(--text-gray); font-size:14px; white-space:nowrap;">@Model.Tickets.Count tickets</span>
+</div>
+
+<div class="card make-div-auto" style="padding:0;">
+    <table>
+        <thead>
+            <tr>
+                <th style="padding-left:24px;">Priority</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Submitted By</th>
+                <th>Time Open</th>
+                <th style="padding-right:24px;">Action</th>
+            </tr>
+        </thead>
+        <tbody id="ticketRows">
+            @if (!Model.Tickets.Any())
+            {
+                <tr>
+                    <td colspan="6" style="text-align:center; color:var(--text-gray); padding:32px;">
+                        No unassigned tickets — nice work!
+                    </td>
+                </tr>
+            }
+            @foreach (var ticket in Model.Tickets)
+            {
+                var borderColor = ticket.Priority.ToLower() switch
+                {
+                    "critical" => "var(--red)",
+                    "high" => "var(--orange)",
+                    _ => "transparent"
+                };
+                var timeOpen = DateTime.UtcNow - ticket.CreatedAt;
+                var timeOpenText = timeOpen.TotalHours < 1
+                    ? $"{(int)timeOpen.TotalMinutes} min ago"
+                    : timeOpen.TotalHours < 24
+                        ? $"{(int)timeOpen.TotalHours} hr{((int)timeOpen.TotalHours == 1 ? "" : "s")} ago"
+                        : $"{(int)timeOpen.TotalDays} day{((int)timeOpen.TotalDays == 1 ? "" : "s")} ago";
+
+                <tr class="ticket-row" style="border-left:3px solid @borderColor;" data-title="@ticket.Title.ToLower()">
+                    <td style="padding-left:21px;"><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
+                    <td>
+                        <div style="font-weight:600;">@ticket.Title</div>
+                        <div style="color:var(--text-gray); font-size:12px;">TKT-@ticket.Id.ToString().Substring(0,8).ToUpper()</div>
+                    </td>
+                    <td>@(ticket.CategoryName ?? "—")</td>
+                    <td>@(ticket.SubmittedByName ?? "—")</td>
+                    <td>
+                        @if (timeOpen.TotalHours >= 1)
+                        {
+                            <span><i class="fa-regular fa-clock" style="color:var(--text-gray);"></i> @timeOpenText</span>
+                        }
+                        else
+                        {
+                            <span class="overdue"><i class="fa-solid fa-circle-exclamation"></i> @timeOpenText</span>
+                        }
+                    </td>
+                    <td style="white-space:nowrap; padding-right:24px;">
+                        <div style="display:inline-block; position:relative;">
+                            <button type="button" class="btn btn-primary" onclick="toggleAssignDropdown('@ticket.Id')">
+                                Assign to Technician <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                            </button>
+                            <div id="dropdown-@ticket.Id" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); z-index:100; min-width:220px; overflow:hidden;">
+                                <form asp-action="AssignToMe" asp-route-id="@ticket.Id" method="post">
+                                    <button type="submit"
+                                            style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border); font-weight:600; color:var(--blue);"
+                                            onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                        <span><i class="fa-regular fa-user" style="margin-right:8px;"></i>Assign to Me</span>
+                                    </button>
+                                </form>
+                                <form asp-action="AssignToTechnician" asp-route-id="@ticket.Id" method="post">
+                                    @foreach (var tech in Model.Technicians)
+                                    {
+                                        <button type="submit" name="technicianId" value="@tech.Id"
+                                                style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border);"
+                                                onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                            <span style="display:flex; align-items:center; gap:8px;">
+                                                <span class="user-avatar" style="width:26px; height:26px; font-size:10px;">
+                                                    @(string.Concat(tech.FirstName.FirstOrDefault(), tech.LastName.FirstOrDefault()).ToString().ToUpper())
+                                                </span>
+                                                @tech.FirstName @tech.LastName
+                                            </span>
+                                            <span style="color:@(tech.OpenTicketCount >= 8 ? "var(--red)" : "var(--text-gray)"); font-size:13px;">
+                                                @tech.OpenTicketCount open
+                                            </span>
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function toggleAssignDropdown(ticketId) {
+        const dropdown = document.getElementById('dropdown-' + ticketId);
+        document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+            if (d.id !== 'dropdown-' + ticketId) d.style.display = 'none';
+        });
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('[id^="dropdown-"]') && !e.target.closest('button[onclick^="toggleAssignDropdown"]')) {
+            document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
+        }
+    });
+
+    document.getElementById('ticketSearch').addEventListener('input', function (e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.ticket-row').forEach(row => {
+            const title = row.getAttribute('data-title');
+            row.style.display = title.includes(query) ? '' : 'none';
+        });
+    });
+</script>

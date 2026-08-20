@@ -1,0 +1,185 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - HelpDesk</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    @if (User.Identity != null && User.Identity.IsAuthenticated)
+    {
+        <div class="app-shell">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo-icon"><i class="fa-solid fa-circle-question"></i></div>
+                    <div>
+                        <div class="logo-title">HelpDesk</div>
+                        <div class="logo-subtitle">IT Support Portal</div>
+                    </div>
+                </div>
+
+                <nav class="sidebar-nav">
+                    <a asp-controller="Dashboard" asp-action="Index" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="fa-solid fa-table-cells"></i> Dashboard
+                    </a>
+
+                    @if (User.IsInRole("TeamLead"))
+                    {
+                        <a asp-controller="Tickets" asp-action="UnassignedQueue" class="nav-item">
+                            <i class="fa-solid fa-inbox"></i> Unassigned Queue
+                        </a>
+                    }
+
+                    @if (User.IsInRole("Technician"))
+                    {
+
+                        <a asp-controller="Tickets" asp-action="AssignedToMe" class="nav-item">
+                            <i class="fa-solid fa-ticket"></i> Assigned to Me
+                        </a>
+                    }
+
+                    <a asp-controller="Tickets" asp-action="MyTickets" class="nav-item">
+                        <i class="fa-solid fa-ticket"></i> My Tickets
+                    </a>
+
+                    @if (User.IsInRole("TeamLead") || User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Tickets" asp-action="AllTickets" class="nav-item">
+                            <i class="fa-solid fa-bars"></i> All Tickets
+                        </a>
+                    }
+
+                    @if (User.IsInRole("TeamLead"))
+                    {
+                        <a asp-controller="Team" asp-action="Index" class="nav-item">
+                            <i class="fa-solid fa-users"></i> My Team
+                        </a>
+                    }
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Categories" asp-action="Index" class="nav-item">
+                            <i class="fa-regular fa-folder"></i> Categories
+                        </a>
+                    }
+
+                    @if (User.IsInRole("TeamLead") || User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Reports" asp-action="Index" class="nav-item">
+                            <i class="fa-solid fa-chart-column"></i> Reports
+                        </a>
+                    }
+
+                    <a asp-controller="Settings" asp-action="Index" class="nav-item">
+                        <i class="fa-solid fa-gear"></i> Settings
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer" style="justify-content: space-between;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="user-avatar">@(User.Identity.Name?.Substring(0, Math.Min(2, User.Identity.Name.Length)).ToUpper())</div>
+                        <div>
+                            <div class="user-name">@User.Identity.Name</div>
+                            <div class="user-role">@(User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "User")</div>
+                        </div>
+                    </div>
+                    <a asp-controller="Account" asp-action="Logout" style="color:#94A3B8; font-size:16px;" title="Logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </aside>
+
+            <main class="main-content">
+                @RenderBody()
+            </main>
+
+            <!-- Create Ticket Modal -->
+            <div id="createTicketModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+                <div style="background:white; border-radius:16px; padding:32px; width:100%; max-width:520px; position:relative;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <h2 style="margin:0; font-size:20px; font-weight:700;">Create New Ticket</h2>
+                        <button onclick="closeTicketModal()" style="background:none; border:none; cursor:pointer; font-size:20px; color:var(--text-gray);">✕</button>
+                    </div>
+
+                    <form id="createTicketForm" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:14px; font-weight:600; display:block; margin-bottom:8px;">
+                                Ticket Title <span style="color:var(--red);">*</span>
+                            </label>
+                            <input type="text" name="title" placeholder="Brief description of the issue"
+                                   style="width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; box-sizing:border-box;" required />
+                        </div>
+
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:14px; font-weight:600; display:block; margin-bottom:8px;">
+                                Description <span style="color:var(--red);">*</span>
+                            </label>
+                            <textarea name="description" placeholder="Provide detailed information about the issue..." rows="4"
+                                      style="width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; resize:vertical; box-sizing:border-box;" required></textarea>
+                        </div>
+
+                        <div style="margin-bottom:20px;">
+                            <label style="font-size:14px; font-weight:600; display:block; margin-bottom:8px;">
+                                Category <span style="color:var(--red);">*</span>
+                            </label>
+                            <select name="categoryId" id="categorySelect"
+                                    style="width:100%; padding:12px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; background:white; box-sizing:border-box;" required>
+                                <option value="">Select a category</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom:24px;">
+                            <label style="font-size:14px; font-weight:600; display:block; margin-bottom:12px;">
+                                Priority <span style="color:var(--red);">*</span>
+                            </label>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                <label class="priority-card low" onclick="selectPriority(this, 'Low')">
+                                    <input type="radio" name="priority" value="Low" style="display:none;" />
+                                    <div style="font-weight:700; margin-bottom:4px;">Low</div>
+                                    <div style="font-size:12px; color:var(--text-gray);">Minor - Low impact</div>
+                                </label>
+                                <label class="priority-card medium" onclick="selectPriority(this, 'Medium')">
+                                    <input type="radio" name="priority" value="Medium" checked style="display:none;" />
+                                    <div style="font-weight:700; margin-bottom:4px;">Medium</div>
+                                    <div style="font-size:12px; color:var(--text-gray);">Normal - Standard issue</div>
+                                </label>
+                                <label class="priority-card high" onclick="selectPriority(this, 'High')">
+                                    <input type="radio" name="priority" value="High" style="display:none;" />
+                                    <div style="font-weight:700; margin-bottom:4px;">High</div>
+                                    <div style="font-size:12px; color:var(--text-gray);">Important - Major impact</div>
+                                </label>
+                                <label class="priority-card critical" onclick="selectPriority(this, 'Critical')">
+                                    <input type="radio" name="priority" value="Critical" style="display:none;" />
+                                    <div style="font-weight:700; margin-bottom:4px;">Critical</div>
+                                    <div style="font-size:12px; color:var(--text-gray);">Urgent - System down</div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div style="display:flex; justify-content:flex-end; gap:12px;">
+                            <button type="button" onclick="closeTicketModal()" class="btn btn-outline">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa-solid fa-ticket"></i> Submit Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        @RenderBody()
+    }
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

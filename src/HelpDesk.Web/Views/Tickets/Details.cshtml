@@ -1,0 +1,233 @@
+@model HelpDesk.Web.Models.TicketDetailViewModel
+@{
+    ViewData["Title"] = Model.Ticket.Title;
+}
+
+<div style="margin-bottom:24px;">
+    <a asp-action="MyTickets" style="color:var(--blue); text-decoration:none; font-size:14px; ">
+        <i class="fa-solid fa-arrow-left "></i> Back to tickets
+    </a>
+</div>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background:var(--red-bg); border:1px solid #FECACA; color:var(--red); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;">
+            <i class="fa-solid fa-circle-exclamation"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+    <div>
+        <h1 class="page-title" style="margin-bottom:6px;">@Model.Ticket.Title</h1>
+        <div style="color:var(--text-gray); font-size:14px;">TKT-@Model.Ticket.Id.ToString().Substring(0,8).ToUpper()</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span class="badge badge-@Model.Ticket.Status.ToLower().Replace(" ","")">@Model.Ticket.Status</span>
+        <span class="badge badge-@Model.Ticket.Priority.ToLower()">@Model.Ticket.Priority</span>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 340px; gap:24px; align-items:start; margin-top: -12px;">
+    
+    <!-- Left Column -->
+    <div style="display:flex; flex-direction:column;">
+
+        <!-- Description -->
+        <div class="card make-div-auto">
+            <div style="font-size:11px; text-transform:uppercase; font-weight:600; color:var(--text-gray); letter-spacing:0.05em; margin-bottom:12px;">Description</div>
+            <p style="margin:0; line-height:1.7; color:var(--text-dark);">@Model.Ticket.Description</p>
+        </div>
+
+        <!-- Activity & Comments -->
+        <div class="card make-div-auto">
+            <div style="font-size:20px; font-weight:700; margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border);">Activity & Comments</div>
+
+            @foreach (var comment in Model.Comments.Where(c => !c.IsInternalNote || Model.CanAddInternalNote))
+            {
+                <div style="display:flex; gap:12px; padding:16px 0; border-bottom:1px solid var(--border);">
+                    <div class="user-avatar" style="width:36px; height:36px; font-size:13px; flex-shrink:0;">
+                        @(string.Concat(comment.AuthorName.Split(' ').Take(2).Select(n => n.FirstOrDefault().ToString())).ToUpper())
+                    </div>
+                    <div style="flex:1;">
+                        <div style="display:flex; gap:12px; align-items:baseline; margin-bottom:6px;">
+                            <span style="font-weight:600; font-size:14px;">@comment.AuthorName</span>
+                            <span style="font-size:12px; color:var(--text-gray);">@comment.CreatedAt.ToString("MMM dd, yyyy, hh:mm tt")</span>
+                        </div>
+                        @if (comment.IsInternalNote)
+                        {
+                            <div style="background:#FEF9C3; border-left:3px solid #CA8A04; padding:10px 14px; border-radius:6px; font-size:14px; color:var(--text-dark);">
+                                @comment.Content
+                            </div>
+                        }
+                        else
+                        {
+                            <p style="margin:0; font-size:14px; color:var(--text-dark);">@comment.Content</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (!Model.Comments.Any())
+            {
+                <p style="color:var(--text-gray); font-size:14px; padding:16px 0;">No comments yet.</p>
+            }
+
+            <!-- Add Comment -->
+            <form asp-action="AddComment" asp-route-id="@Model.Ticket.Id" method="post" style="margin-top:16px;">
+                <textarea name="content" placeholder="Add a comment or note..." rows="3"
+                          style="width:100%; padding:14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; resize:vertical; color:var(--text-gray); box-sizing:border-box;"></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+                    @if (Model.CanAddInternalNote)
+                    {
+                        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-gray); cursor:pointer;">
+                            <input type="checkbox" name="isInternalNote" value="true" style="width:16px; height:16px;" />
+                            Internal note (not visible to requester)
+                        </label>
+                    }
+                    else
+                    {
+                        <label style="display:flex; align-items:center; gap:8px; font-size:14px; color:var(--text-gray);">
+                            <div style="width:36px; height:20px; background:#E2E8F0; border-radius:10px;"></div>
+                            Internal note (not visible to requester)
+                        </label>
+                    }
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-paper-plane"></i> Post Comment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div style="display:flex; flex-direction:column;">
+
+        <!-- Ticket Details -->
+        <div class="card make-div-auto">
+            <div style="font-size:11px; text-transform:uppercase; font-weight:600; color:var(--text-gray); letter-spacing:0.05em; margin-bottom:16px;">Ticket Details</div>
+
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fa-regular fa-user" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
+                    <div>
+                        <div style="font-size:12px; color:var(--text-gray);">Submitted By</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@(Model.Ticket.SubmittedByName ?? "—")</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fa-regular fa-user" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
+                    <div>
+                        <div style="font-size:12px; color:var(--text-gray);">Assigned To</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@(Model.Ticket.AssignedToName ?? "Unassigned")</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fa-solid fa-tag" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
+                    <div>
+                        <div style="font-size:12px; color:var(--text-gray);">Category</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@(Model.Ticket.CategoryName ?? "—")</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fa-regular fa-calendar" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
+                    <div>
+                        <div style="font-size:12px; color:var(--text-gray);">Created Date</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <i class="fa-regular fa-clock" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
+                    <div>
+                        <div style="font-size:12px; color:var(--text-gray);">Last Updated</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLA Status -->
+        @{
+            var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow;
+        }
+        <div class="card make-div-auto" style="@(isOverdue ? "background:#FEF2F2; border-color:#FECACA;" : "")">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                <i class="fa-solid fa-circle-exclamation" style="color:@(isOverdue ? "var(--red)" : "var(--green)");"></i>
+                <span style="font-size:11px; text-transform:uppercase; font-weight:600; color:@(isOverdue ? "var(--red)" : "var(--green)"); letter-spacing:0.05em;">SLA Status</span>
+            </div>
+            @if (isOverdue)
+            {
+                <div style="font-size:24px; font-weight:700; color:var(--red);">Overdue</div>
+                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">Due: @Model.Ticket.ResolutionDueAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+            }
+            else
+            {
+                var timeLeft = Model.Ticket.ResolutionDueAt - DateTime.UtcNow;
+                <div style="font-size:18px; font-weight:700; color:var(--green);">On Track</div>
+                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">
+                    @timeLeft.Hours hrs @timeLeft.Minutes min remaining
+                </div>
+            }
+        </div>
+
+        <!-- Actions (for Technician/TeamLead/Admin only) -->
+        @if (Model.CanAssign || Model.CanUpdateStatus)
+        {
+            <div class="card make-div-auto">
+                <div class="card-title">Actions</div>
+                <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+
+                    @if (Model.CanAssign)
+                    {
+                        <form asp-action="AssignToTechnician" asp-route-id="@Model.Ticket.Id" method="post" style="margin-bottom:4px;">
+                            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Assign To</label>
+                            <select name="technicianId" style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:8px; background:white;" required>
+                                @foreach (var tech in Model.Technicians)
+                                {
+                                    <option value="@tech.Id">@tech.FirstName @tech.LastName</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                                Assign Ticket
+                            </button>
+                        </form>
+                    }
+
+                    @if (Model.CanUpdateStatus && Model.Ticket.ValidNextStatuses.Any())
+                    {
+                        <form asp-action="UpdateStatus" asp-route-id="@Model.Ticket.Id" method="post">
+                            <select name="newStatus" style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:10px; background:white;">
+                                @foreach (var status in Model.Ticket.ValidNextStatuses)
+                                {
+                                    var label = status switch
+                                    {
+                                        "InProgress" => "In Progress",
+                                        _ => status
+                                    };
+                                    <option value="@status">@label</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                                Update Status
+                            </button>
+                        </form>
+                    }
+                    else if (Model.Ticket.Status == "Closed")
+                    {
+                        <div style="background:#F1F5F9; padding:12px 14px; border-radius:8px; font-size:13px; color:var(--text-gray);">
+                            <i class="fa-solid fa-lock"></i> This ticket is closed.
+                        </div>
+                    }
+
+                    @if (Model.CanUpdateStatus && Model.Ticket.Status != "Escalated" && Model.Ticket.Status != "Resolved" && Model.Ticket.Status != "Closed")
+                    {
+                        <form asp-action="Escalate" asp-route-id="@Model.Ticket.Id" method="post">
+                            <button type="submit" class="btn btn-outline" style="width:100%; justify-content:center; color:var(--red); border-color:#FECACA;">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Escalate Ticket
+                            </button>
+                        </form>
+                    }
+
+                </div>
+            </div>
+        }
+    </div>
+</div>

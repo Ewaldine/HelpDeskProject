@@ -1,0 +1,121 @@
+@model HelpDesk.Web.Models.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Admin Dashboard</h1>
+        <p class="page-subtitle">Organization-wide ticket overview and analytics.</p>
+    </div>
+    <button onclick="openTicketModal()" class="btn btn-primary">
+        <i class="fa-solid fa-ticket"></i> Create New Ticket
+    </button>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#3B82F6;">
+        <div>
+            <div class="stat-label">Total Open Tickets</div>
+            <div class="stat-value">@Model.TotalOpenTickets</div>
+        </div>
+        <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#EF4444;">
+        <div>
+            <div class="stat-label">SLA Breaches (Week)</div>
+            <div class="stat-value">@Model.SlaBreachesWeek</div>
+        </div>
+        <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#16A34A;">
+        <div>
+            <div class="stat-label">Total Resolved</div>
+            <div class="stat-value">@Model.TotalResolved</div>
+        </div>
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#9333EA;">
+        <div>
+            <div class="stat-label">Active Technicians</div>
+            <div class="stat-value">@Model.ActiveTechnicians</div>
+        </div>
+        <div class="stat-icon purple"><i class="fa-solid fa-users"></i></div>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+    <div class="card">
+        <div class="card-title" >Tickets by Category</div>
+        <canvas id="categoryChart" height="150"></canvas>
+    </div>
+    <div class="card">
+        <div class="card-title" style="margin-bottom:-10px; justify-content: center;">Tickets by Priority</div>
+        <canvas id="priorityChart" height="250"></canvas>
+    </div>
+</div>
+
+<div class="card card make-div-auto">
+    <div class="card-title">Technician Workload</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Technician</th>
+                <th>Assigned Tickets</th>
+                <th>Resolved (This Month)</th>
+                <th>Avg Resolution Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var tech in Model.TechnicianWorkload)
+            {
+                <tr>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div class="user-avatar" style="width:32px; height:32px; font-size:12px;">@tech.Initials</div>
+                            <span style="font-weight:600;">@tech.Name</span>
+                        </div>
+                    </td>
+                    <td>@tech.AssignedTickets</td>
+                    <td>@tech.ResolvedThisMonth</td>
+                    <td>@tech.AvgResolutionHours hrs</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        const categoryLabels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByCategory.Select(c => c.Category)));
+        const categoryData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByCategory.Select(c => c.Count)));
+
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'bar',
+            data: {
+                labels: categoryLabels,
+                datasets: [{ data: categoryData, backgroundColor: '#3B82F6', borderRadius: 6 }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        const priorityLabels = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByPriority.Select(p => p.Priority)));
+        const priorityData = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.TicketsByPriority.Select(p => p.Percent)));
+
+        new Chart(document.getElementById('priorityChart'), {
+            type: 'doughnut',
+            data: {
+                labels: priorityLabels,
+                datasets: [{
+                    data: priorityData,
+                    backgroundColor: ['#EF4444', '#F97316', '#CA8A04', '#16A34A']
+                }]
+            },
+            options: { plugins: { legend: { position: 'right' } } }
+        });
+    </script>
+}

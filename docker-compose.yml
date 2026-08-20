@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: helpdesk_sqlserver
+    environment:
+      SA_PASSWORD: "HelpDesk@123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: helpdesk_keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: Ewaldine
+      KEYCLOAK_ADMIN_PASSWORD: ewaldine@123
+    ports:
+      - "8080:8080"
+
+  redis:
+    image: redis:7-alpine
+    container_name: helpdesk_redis
+    ports:
+      - "6379:6379"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: helpdesk_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  loki:
+    image: grafana/loki:latest
+    container_name: helpdesk_loki
+    ports:
+      - "3100:3100"
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: helpdesk_tempo
+    command: ["-config.file=/etc/tempo.yml"]
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+    volumes:
+      - ./infrastructure/tempo.yml:/etc/tempo.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: helpdesk_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  grafana_data:

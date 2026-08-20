@@ -1,0 +1,77 @@
+@model HelpDesk.Web.Models.TechnicianDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Your assigned tickets and workload.</p>
+    </div>
+    <div style="text-align:right; color:var(--text-gray); font-size:13px;">
+        <div style="font-weight:600; color:var(--text-dark); font-size:15px;">@DateTime.Now.ToString("HH:mm")</div>
+        <div>@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
+    </div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#3B82F6;">
+        <div>
+            <div class="stat-label">My Assigned Tickets</div>
+            <div class="stat-value">@Model.AssignedTicketCount</div>
+        </div>
+        <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#16A34A;">
+        <div>
+            <div class="stat-label">Resolved Today</div>
+            <div class="stat-value">@Model.ResolvedToday</div>
+        </div>
+        <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+    </div>
+    <div class="stat-card" style="border-left-width: 7px; border-left-color:#9333EA;">
+        <div>
+            <div class="stat-label">Avg Response Time</div>
+            <div class="stat-value">@Model.AvgResponseTime</div>
+        </div>
+        <div class="stat-icon purple"><i class="fa-solid fa-clock"></i></div>
+    </div>
+</div>
+
+<div class="card make-div-auto">
+    <div class="card-title">My Ticket Queue (Sorted by Priority)</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Title</th>
+                <th>Priority</th>
+                <th>Status</th>
+                <th>SLA Countdown</th>
+                <th>Submitted By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ticket in Model.TicketQueue)
+            {
+                <tr>
+                    <td><a class="ticket-link" asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.Id">@ticket.TicketNumber</a></td>
+                    <td>@ticket.Title</td>
+                    <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
+                    <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
+                    <td>
+                        @if (ticket.IsOverdue)
+                        {
+                            <span class="overdue"><i class="fa-solid fa-circle-exclamation"></i> Overdue</span>
+                        }
+                        else
+                        {
+                            <span>@ticket.SlaCountdown remaining</span>
+                        }
+                    </td>
+                    <td>@ticket.SubmittedBy</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

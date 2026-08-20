@@ -1,0 +1,154 @@
+@model HelpDesk.Web.Models.TicketListViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.PageTitle</h1>
+        <p class="page-subtitle">@Model.PageSubtitle</p>
+    </div>
+    <button onclick="openTicketModal()" class="btn btn-primary">
+        <i class="fa-solid fa-ticket"></i> Create New Ticket
+    </button>
+</div>
+
+<div class="card make-div-auto" style="padding:16px; margin-bottom:0; display:flex; gap:16px; align-items:center;">
+    <div style="flex:1; position:relative;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-gray); font-size:13px;"></i>
+        <input type="text" id="ticketSearch" placeholder="Search tickets..."
+               style="width:100%; padding:10px 14px 10px 38px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; box-sizing:border-box;" />
+    </div>
+
+    <div class="filter-dropdown-wrap">
+        <button type="button" class="filter-btn" onclick="toggleFilterDropdown('statusFilter')">
+            <i class="fa-solid fa-filter"></i> <span id="statusLabel">All Statuses</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="statusFilter" class="filter-dropdown">
+            <div class="filter-option selected" onclick="selectFilter('status', '', 'All Statuses', this)">All Statuses</div>
+            <div class="filter-option" onclick="selectFilter('status', 'open', 'Open', this)">Open</div>
+            <div class="filter-option" onclick="selectFilter('status', 'inprogress', 'In Progress', this)">In Progress</div>
+            <div class="filter-option" onclick="selectFilter('status', 'resolved', 'Resolved', this)">Resolved</div>
+            <div class="filter-option" onclick="selectFilter('status', 'closed', 'Closed', this)">Closed</div>
+        </div>
+    </div>
+
+    <div class="filter-dropdown-wrap">
+        <button type="button" class="filter-btn" onclick="toggleFilterDropdown('priorityFilter')">
+            <i class="fa-solid fa-filter"></i> <span id="priorityLabel">All Priorities</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="priorityFilter" class="filter-dropdown">
+            <div class="filter-option selected" onclick="selectFilter('priority', '', 'All Priorities', this)">All Priorities</div>
+            <div class="filter-option" onclick="selectFilter('priority', 'low', 'Low', this)">Low</div>
+            <div class="filter-option" onclick="selectFilter('priority', 'medium', 'Medium', this)">Medium</div>
+            <div class="filter-option" onclick="selectFilter('priority', 'high', 'High', this)">High</div>
+            <div class="filter-option" onclick="selectFilter('priority', 'critical', 'Critical', this)">Critical</div>
+        </div>
+    </div>
+
+    <div class="filter-dropdown-wrap">
+        <button type="button" class="filter-btn" onclick="toggleFilterDropdown('categoryFilter')">
+            <i class="fa-solid fa-filter"></i> <span id="categoryLabel">All Categories</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="categoryFilter" class="filter-dropdown">
+            <div class="filter-option selected" onclick="selectFilter('category', '', 'All Categories', this)">All Categories</div>
+            @foreach (var cat in Model.Tickets.Select(t => t.CategoryName).Where(c => c != null).Distinct())
+            {
+                <div class="filter-option" onclick="selectFilter('category', '@cat!.ToLower()', '@cat', this)">@cat</div>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="height:16px;"></div>
+
+<div class="card make-div-auto">
+    <table>
+        <thead>
+            <tr>
+                <th>Ticket ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Category</th>
+                <th>Submitted By</th>
+                <th>Assigned To</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Tickets.Any())
+            {
+                <tr>
+                    <td colspan="8" style="text-align:center; color:var(--text-gray); padding:32px;">
+                        No tickets found.
+                    </td>
+                </tr>
+            }
+            @foreach (var ticket in Model.Tickets)
+            {
+                <tr data-title="@ticket.Title.ToLower()" data-status="@ticket.Status.ToLower().Replace(" ", "")" data-priority="@ticket.Priority.ToLower()" data-category="@(ticket.CategoryName?.ToLower() ?? "")">
+                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">#@ticket.Id.ToString().Substring(0, 8)</a></td>
+                    <td>@ticket.Title</td>
+                    <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
+                    <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
+                    <td>@(ticket.CategoryName ?? "—")</td>
+                    <td>@(ticket.SubmittedByName ?? "—")</td>
+                    <td>@(ticket.AssignedToName ?? "Unassigned")</td>
+                    <td>@ticket.CreatedAt.ToString("MMM dd, yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<script>
+    document.getElementById('ticketSearch').addEventListener('input', function (e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('tbody tr[data-title]').forEach(row => {
+            row.style.display = row.getAttribute('data-title').includes(query) ? '' : 'none';
+        });
+    });
+</script>
+<script>
+    let activeFilters = { status: '', priority: '', category: '' };
+
+    function toggleFilterDropdown(id) {
+        document.querySelectorAll('.filter-dropdown').forEach(d => {
+            if (d.id !== id) d.style.display = 'none';
+        });
+        const dropdown = document.getElementById(id);
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function selectFilter(type, value, label, el) {
+        activeFilters[type] = value;
+        document.getElementById(type + 'Label').textContent = label;
+
+        el.parentElement.querySelectorAll('.filter-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+
+        applyFilters();
+        document.querySelectorAll('.filter-dropdown').forEach(d => d.style.display = 'none');
+    }
+
+    function applyFilters() {
+        const searchQuery = document.getElementById('ticketSearch').value.toLowerCase();
+
+        document.querySelectorAll('tbody tr[data-title]').forEach(row => {
+            const matchesSearch = row.getAttribute('data-title').includes(searchQuery);
+            const matchesStatus = !activeFilters.status || row.getAttribute('data-status') === activeFilters.status;
+            const matchesPriority = !activeFilters.priority || row.getAttribute('data-priority') === activeFilters.priority;
+            const matchesCategory = !activeFilters.category || row.getAttribute('data-category') === activeFilters.category;
+
+            row.style.display = (matchesSearch && matchesStatus && matchesPriority && matchesCategory) ? '' : 'none';
+        });
+    }
+
+    document.getElementById('ticketSearch').addEventListener('input', applyFilters);
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.filter-dropdown-wrap')) {
+            document.querySelectorAll('.filter-dropdown').forEach(d => d.style.display = 'none');
+        }
+    });
+</script>

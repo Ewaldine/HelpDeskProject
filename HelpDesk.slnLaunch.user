@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\HelpDesk.API\\HelpDesk.API.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\HelpDesk.Web\\HelpDesk.Web.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
