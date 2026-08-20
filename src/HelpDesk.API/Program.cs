@@ -59,7 +59,7 @@ builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer
         {
             ValidateAudience = false,
             ValidateIssuer = true,
-            ValidIssuer = "http://localhost:8080/realms/helpdesk",
+            ValidIssuer = "http://127.0.0.1:8080/realms/helpdesk",
             ValidateLifetime = true,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
             NameClaimType = "preferred_username"
