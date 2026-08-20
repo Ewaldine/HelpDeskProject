@@ -53,7 +53,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://localhost:8080/realms/helpdesk";
+        options.Authority = "http://127.0.0.1:8080/realms/helpdesk";
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
@@ -108,7 +108,7 @@ builder.Services.AddOpenTelemetry()
         .AddEntityFrameworkCoreInstrumentation()
         .AddOtlpExporter(options =>
         {
-            options.Endpoint = new Uri("http://localhost:4317");
+            options.Endpoint = new Uri("http://127.0.0.1:4317");
         }))
     .WithMetrics(metrics => metrics
         .AddAspNetCoreInstrumentation()
