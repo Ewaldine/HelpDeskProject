@@ -53,13 +53,13 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://127.0.0.1:8080/realms/helpdesk";
+        options.Authority = "https://login-dev.na.sbicdirectory.com:12443/realms/development";
         options.RequireHttpsMetadata = false;
         options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
         {
             ValidateAudience = false,
             ValidateIssuer = true,
-            ValidIssuer = "http://127.0.0.1:8080/realms/helpdesk",
+            ValidIssuer = "https://login-dev.na.sbicdirectory.com:12443/realms/development",
             ValidateLifetime = true,
             RoleClaimType = System.Security.Claims.ClaimTypes.Role,
             NameClaimType = "preferred_username"
