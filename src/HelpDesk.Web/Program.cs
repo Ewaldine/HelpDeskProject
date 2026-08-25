@@ -35,6 +35,8 @@ builder.Services.AddAuthentication(options =>
     options.RequireHttpsMetadata = false;
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;
+    options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 
     options.Scope.Clear();
     options.Scope.Add("openid");
