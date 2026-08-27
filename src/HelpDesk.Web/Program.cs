@@ -4,10 +4,8 @@ using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// HttpClient to call HelpDesk.API
 builder.Services.AddHttpClient("HelpDeskApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
@@ -15,22 +13,53 @@ builder.Services.AddHttpClient("HelpDeskApi", client =>
 builder.Services.AddScoped<HelpDesk.Web.Services.ITicketApiService, HelpDesk.Web.Services.TicketApiService>();
 builder.Services.AddHttpContextAccessor();
 
-// Authentication — Keycloak via OpenID Connect
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
-.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    // Use environment-aware SameSite / Secure settings so local development over HTTP
+    // doesn't break authentication while production uses secure cookies.
+    if (builder.Environment.IsDevelopment())
+    {
+        options.Cookie.SameSite = SameSiteMode.Unspecified;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    }
+    else
+    {
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    }
+})
 .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, options =>
 {
     options.Authority = builder.Configuration["Keycloak:Authority"];
     options.ClientId = builder.Configuration["Keycloak:ClientId"];
     options.ClientSecret = builder.Configuration["Keycloak:ClientSecret"];
     options.ResponseType = "code";
-    options.RequireHttpsMetadata = false;
+    // Require HTTPS in non-development environments. Local development can use HTTP.
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveTokens = true;
     options.GetClaimsFromUserInfoEndpoint = true;
+    // Correlation and Nonce cookies must allow cross-site requests from the identity provider.
+    // Use None + Secure in production; relax during development if using HTTP.
+    if (builder.Environment.IsDevelopment())
+    {
+        options.CorrelationCookie.SameSite = SameSiteMode.Unspecified;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.NonceCookie.SameSite = SameSiteMode.Unspecified;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    }
+    else
+    {
+        options.CorrelationCookie.SameSite = SameSiteMode.None;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.NonceCookie.SameSite = SameSiteMode.None;
+        options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+    }
+    options.CallbackPath = "/signin-oidc";
 
     options.Scope.Clear();
     options.Scope.Add("openid");
@@ -40,7 +69,7 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters.NameClaimType = "preferred_username";
     options.TokenValidationParameters.RoleClaimType = System.Security.Claims.ClaimTypes.Role;
 
-    options.Events = new Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents
+    options.Events = new OpenIdConnectEvents
     {
         OnTokenValidated = context =>
         {
@@ -50,7 +79,7 @@ builder.Services.AddAuthentication(options =>
             var accessToken = context.TokenEndpointResponse?.AccessToken;
             if (!string.IsNullOrEmpty(accessToken))
             {
-                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var handler = new JwtSecurityTokenHandler();
                 var jwt = handler.ReadJwtToken(accessToken);
 
                 var realmAccessClaim = jwt.Claims.FirstOrDefault(c => c.Type == "realm_access");
@@ -86,7 +115,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();
