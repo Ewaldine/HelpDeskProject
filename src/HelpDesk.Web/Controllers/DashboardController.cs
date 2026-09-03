@@ -9,7 +9,7 @@ namespace HelpDesk.Web.Controllers;
 public class DashboardController : BaseController
 {
     private readonly ITicketApiService _ticketApiService;
-    private static readonly Guid TenantId = Guid.Parse("6FC7F192-A64A-49F4-82A6-2BC754631767");
+    private static readonly Guid TenantId = Guid.Parse("E9DC1A56-E4FE-448F-93B8-8234B1379D2A");
 
     public DashboardController(ITicketApiService ticketApiService)
     {
