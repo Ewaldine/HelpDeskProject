@@ -127,6 +127,42 @@ public class TicketApiService : ITicketApiService
         return await response.Content.ReadFromJsonAsync<TeamLeadDashboardDto>();
     }
 
+    public async Task<List<NotificationDto>> GetNotificationsAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.GetAsync($"api/Notifications/user/{userId}");
+        if (!response.IsSuccessStatusCode) return new List<NotificationDto>();
+        return await response.Content.ReadFromJsonAsync<List<NotificationDto>>() ?? new List<NotificationDto>();
+    }
+
+    public async Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.GetAsync($"api/Users/{userId}/preferences");
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserPreferencesDto>();
+    }
+
+    public async Task UpdateUserPreferencesAsync(Guid userId, object preferences, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/preferences", preferences);
+    }
+
+    public async Task<UserDto?> UpdateUserProfileAsync(Guid userId, object profile, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.PutAsJsonAsync($"api/Users/{userId}/profile", profile);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserDto>();
+    }
+
+    public async Task MarkAllNotificationsReadAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PostAsync($"api/Notifications/user/{userId}/mark-read", null);
+    }
+
     public async Task<(bool Success, string? ErrorMessage)> EscalateAsync(Guid ticketId, Guid escalatedById, string accessToken)
     {
         var client = CreateClient(accessToken);
@@ -137,5 +173,17 @@ public class TicketApiService : ITicketApiService
 
         var errorMessage = await response.Content.ReadAsStringAsync();
         return (false, errorMessage);
+    }
+
+    public async Task UpdateProfileAsync(Guid userId, UpdateProfileDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/profile", dto);
+    }
+
+    public async Task UpdateNotificationPreferencesAsync(Guid userId, NotificationPreferencesDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/notifications", dto);
     }
 }

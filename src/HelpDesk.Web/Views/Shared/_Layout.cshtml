@@ -74,6 +74,10 @@
                         </a>
                     }
 
+                    <a asp-controller="Notifications" asp-action="Index" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Notifications" ? "active" : "")">
+                        <i class="fa-regular fa-bell"></i> Notifications
+                    </a>
+
                     <a asp-controller="Settings" asp-action="Index" class="nav-item">
                         <i class="fa-solid fa-gear"></i> Settings
                     </a>

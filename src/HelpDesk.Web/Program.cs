@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using System.IdentityModel.Tokens.Jwt;
+using HelpDesk.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,8 @@ builder.Services.AddHttpClient("HelpDeskApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"]!);
 });
-builder.Services.AddScoped<HelpDesk.Web.Services.ITicketApiService, HelpDesk.Web.Services.TicketApiService>();
+// Register API client service used by controllers to call the backend API
+builder.Services.AddScoped<ITicketApiService, TicketApiService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthentication(options =>

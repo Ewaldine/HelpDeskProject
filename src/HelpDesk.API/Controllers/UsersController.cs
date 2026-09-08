@@ -21,6 +21,19 @@ public class UsersController : ControllerBase
         _context = context;
     }
 
+public class PreferencesUpdateDto
+{
+    public bool InAppNotifications { get; set; }
+}
+
+public class UserProfileUpdateDto
+{
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? Department { get; set; }
+    public string? OfficeLocation { get; set; }
+}
     [HttpGet("by-keycloak/{keycloakId}")]
     public async Task<ActionResult<UserDto>> GetByKeycloakId(string keycloakId)
     {
@@ -34,8 +47,69 @@ public class UsersController : ControllerBase
             LastName = user.LastName,
             Email = user.Email,
             Role = user.Role.ToString(),
-            KeycloakId = user.KeycloakId
+            KeycloakId = user.KeycloakId,
+            PhoneNumber = user.PhoneNumber,
+            Department = user.Department,
+            OfficeLocation = user.OfficeLocation,
+            EmailNotifications = user.EmailNotifications,
+            TicketStatusUpdates = user.TicketStatusUpdates,
+            NewCommentNotifications = user.NewCommentNotifications,
+            WeeklySummary = user.WeeklySummary
         });
+    }
+
+    [HttpGet("{id}/preferences")]
+    public async Task<ActionResult<object>> GetPreferences(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        return Ok(new
+        {
+            InAppNotifications = user.InAppNotificationsEnabled
+        });
+    }
+
+    [HttpPut("{id}/preferences")]
+    public async Task<IActionResult> UpdatePreferences(Guid id, [FromBody] PreferencesUpdateDto dto)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        user.InAppNotificationsEnabled = dto.InAppNotifications;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
+
+    [HttpPut("{id}/profile")]
+    public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
+        user.PhoneNumber = dto.PhoneNumber;
+        user.Department = dto.Department;
+        user.OfficeLocation = dto.OfficeLocation;
+
+        await _userRepository.UpdateAsync(user);
+        return NoContent();
+    }
+
+    [HttpPut("{id}/notifications")]
+    public async Task<IActionResult> UpdateNotifications(Guid id, [FromBody] NotificationPreferencesDto dto)
+    {
+        var user = await _userRepository.GetByIdAsync(id);
+        if (user == null) return NotFound();
+
+        user.EmailNotifications = dto.EmailNotifications;
+        user.TicketStatusUpdates = dto.TicketStatusUpdates;
+        user.NewCommentNotifications = dto.NewCommentNotifications;
+        user.WeeklySummary = dto.WeeklySummary;
+
+        await _userRepository.UpdateAsync(user);
+        return NoContent();
     }
 
     [HttpGet("technicians/{tenantId}")]

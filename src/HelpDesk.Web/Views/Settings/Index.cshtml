@@ -24,9 +24,17 @@
 
     <div style="display:flex; align-items:center; justify-content:space-between; padding:30px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:20px;">
         <div style="display:flex; align-items:center; gap:14px;">
-            <div class="user-avatar" style="width:56px; height:56px; font-size:20px;">
-                @(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())
-            </div>
+            @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+            {
+                <img src="@Model.ProfileImageUrl" alt="Profile" style="width:56px; height:56px; border-radius:8px; object-fit:cover;" />
+            }
+            else
+            {
+                <div class="user-avatar" style="width:56px; height:56px; font-size:20px;">
+                    @(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())
+                </div>
+            }
+
             <div>
                 <div style="font-weight:700; font-size:16px; margin-bottom: 5px;">@Model.FirstName @Model.LastName</div>
                 <div style="color:var(--text-gray); font-size:14px;">@Model.Email</div>
@@ -36,10 +44,9 @@
                 </div>
             </div>
         </div>
-        <a href="#" style="color:var(--blue); font-size:14px; font-weight:600; text-decoration:none;">Change photo</a>
     </div>
 
-    <form asp-controller="Settings" asp-action="UpdateProfile" method="post">
+    <form asp-controller="Settings" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
             <div style="padding:10px; border-bottom:1px solid var(--border); grid-column:1/-1; display:grid; grid-template-columns:1fr 1fr 1fr;">
                 <div>
@@ -68,7 +75,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <i class="fa-solid fa-phone" style="color:var(--text-gray);"></i>
-                    <input type="text" name="phoneNumber" placeholder="+1 (555) 000-0000" value="@Model.PhoneNumber" style="border:none; background:none; font-size:14px; text-align:right;" />
+                    <input type="text" name="phoneNumber" placeholder="+246 81 826 7371" value="@Model.PhoneNumber" style="border:none; background:none; font-size:14px; text-align:left;" />
                 </div>
             </div>
 
@@ -78,7 +85,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <i class="fa-regular fa-building" style="color:var(--text-gray);"></i>
-                    <input type="text" name="department" value="@Model.Department" style="border:none; background:none; font-size:14px; text-align:right;" />
+                    <input type="text" name="department" value="@Model.Department" style="border:none; background:none; font-size:14px; text-align:left;" />
                 </div>
             </div>
 
@@ -88,7 +95,7 @@
                 </div>
                 <div style="display:flex; align-items:center; gap:8px;">
                     <i class="fa-solid fa-location-dot" style="color:var(--text-gray);"></i>
-                    <input type="text" name="officeLocation" placeholder="e.g. Johannesburg — Floor 3" value="@Model.OfficeLocation" style="border:none; background:none; font-size:14px; text-align:right;" />
+                    <input type="text" name="officeLocation" placeholder="e.g. Johannesburg — Floor 3" value="@Model.OfficeLocation" style="border:none; background:none; font-size:14px; text-align:left;" />
                 </div>
             </div>
         </div>
@@ -123,6 +130,7 @@
                 ("ticketStatusUpdates", "Ticket Status Updates", "Get notified when ticket status changes", Model.TicketStatusUpdates),
                 ("newComments", "New Comments", "Notifications for new comments on your tickets", Model.NewComments),
                 ("weeklySummary", "Weekly Summary", "A weekly digest of your ticket activity", Model.WeeklySummary)
+                ,("inAppNotifications", "In App", "Receive notifications inside the application (Notifications page)", Model.InAppNotifications)
             };
         }
 
@@ -163,19 +171,20 @@
             <div style="font-weight:600; font-size:14px;">Password</div>
             <div style="font-size:12px; color:var(--text-gray);">Managed through your organization's identity provider.</div>
         </div>
-        <button type="button" class="btn btn-outline" disabled style="opacity:0.6; cursor:not-allowed;">Change Password</button>
+        <a href="https://login-dev.na.sbicdirectory.com:12443/realms/development/account/account-security/signing-in" target="_blank" class="btn btn-outline">
+            Change Password
+        </a>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid var(--border);">
-        <div>
-            <div style="font-weight:600; font-size:14px;">Two-Factor Authentication</div>
-            <div style="font-size:12px; color:var(--text-gray);">Add an extra layer of security to your account</div>
-        </div>
-        <label class="toggle-switch">
-            <input type="checkbox" disabled />
-            <span class="toggle-slider" style="opacity:0.6;"></span>
-        </label>
+    <div>
+        <div style="font-weight:600; font-size:14px;">Two-Factor Authentication</div>
+        <div style="font-size:12px; color:var(--text-gray);">Managed through your identity provider</div>
     </div>
+        <a href="https://login-dev.na.sbicdirectory.com:12443/realms/development/account/account-security/signing-in" target="_blank" class="btn btn-outline">
+        Manage in Keycloak
+    </a>
+</div>
 
     <div style="padding-top:16px;">
         <div style="font-weight:600; font-size:14px; margin-bottom:10px;">Active Sessions</div>

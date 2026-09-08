@@ -16,4 +16,6 @@ public class SettingsViewModel
     public bool TicketStatusUpdates { get; set; } = true;
     public bool NewComments { get; set; } = true;
     public bool WeeklySummary { get; set; } = false;
+    public bool InAppNotifications { get; set; } = true;
+    public string? ProfileImageUrl { get; set; }
 }

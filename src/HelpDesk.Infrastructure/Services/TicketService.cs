@@ -129,6 +129,8 @@ public class TicketService : ITicketService
 
         foreach (var recipient in recipients)
         {
+            if (!recipient.InAppNotificationsEnabled) continue;
+
             var notification = new Notification
             {
                 UserId = recipient.Id,
@@ -148,15 +150,11 @@ public class TicketService : ITicketService
         var ticket = await _ticketRepository.GetByIdAsync(ticketId)
     ?? throw new InvalidOperationException("Ticket not found");
 
-        if (ticket.Status == TicketStatus.Escalated)
-            throw new InvalidOperationException("This ticket is already escalated.");
-
         if (ticket.Status == TicketStatus.Resolved || ticket.Status == TicketStatus.Closed)
             throw new InvalidOperationException("Cannot escalate a resolved or closed ticket.");
 
-
         var oldPriority = ticket.Priority;
-        ticket.Status = TicketStatus.Escalated;
+        // Mark SLA breach and increase priority up to Critical; do not change status
         ticket.IsSlaBreach = true;
 
         if (ticket.Priority < TicketPriority.Critical)
@@ -168,11 +166,30 @@ public class TicketService : ITicketService
 
         await AddHistoryAsync(ticketId, "Escalated", oldPriority.ToString(), ticket.Priority.ToString(), escalatedById);
 
+        // notify assigned technician if present and accepts in-app notifications
+        if (ticket.AssignedToId != null)
+        {
+            var assigned = await _context.Users.FindAsync(ticket.AssignedToId.Value);
+            if (assigned != null && assigned.InAppNotificationsEnabled)
+            {
+                var notification = new Notification
+                {
+                    UserId = ticket.AssignedToId.Value,
+                    TicketId = ticket.Id,
+                    Title = "Ticket Escalated",
+                    Message = $"Ticket '{ticket.Title}' was escalated and priority changed to {ticket.Priority}.",
+                    IsRead = false
+                };
+                await _context.Notifications.AddAsync(notification);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         return await _context.Tickets
-       .Include(t => t.SubmittedBy)
-       .Include(t => t.AssignedTo)
-       .Include(t => t.Category)
-       .FirstAsync(t => t.Id == ticketId);
+            .Include(t => t.SubmittedBy)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.Category)
+            .FirstAsync(t => t.Id == ticketId);
     }
 
     public async Task AddCommentAsync(Guid ticketId, TicketComment comment)
