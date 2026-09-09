@@ -30,9 +30,16 @@
             }
             else
             {
-                <div class="user-avatar" style="width:56px; height:56px; font-size:20px;">
-                    @(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())
-                </div>
+                @if (!string.IsNullOrEmpty(Model.ProfilePhotoUrl))
+                {
+                    <img src="@Model.ProfilePhotoUrl" style="width:56px; height:56px; border-radius:50%; object-fit:cover;" />
+                }
+                else
+                {
+                    <div class="user-avatar" style="width:56px; height:56px; font-size:20px;">
+                        @(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())
+                    </div>
+                }
             }
 
             <div>
@@ -44,6 +51,10 @@
                 </div>
             </div>
         </div>
+        <form asp-action="UploadPhoto" method="post" enctype="multipart/form-data" id="photoForm">
+            <input type="file" name="photo" id="photoInput" accept="image/*" style="display:none;" onchange="document.getElementById('photoForm').submit()" />
+            <a href="#" onclick="document.getElementById('photoInput').click(); return false;" style="color:var(--blue); font-size:14px; font-weight:600; text-decoration:none;">Change photo</a>
+        </form>
     </div>
 
     <form asp-controller="Settings" asp-action="UpdateProfile" method="post" enctype="multipart/form-data">

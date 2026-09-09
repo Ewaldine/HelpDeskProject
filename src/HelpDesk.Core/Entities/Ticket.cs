@@ -29,6 +29,7 @@ public class Ticket : BaseEntity
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 
+
     public ICollection<TicketComment> Comments { get; set; } = new List<TicketComment>();
     public ICollection<TicketHistory> History { get; set; } = new List<TicketHistory>();
 }

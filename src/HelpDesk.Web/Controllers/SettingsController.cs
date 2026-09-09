@@ -31,6 +31,7 @@ public class SettingsController : BaseController
             LastName = currentUser.LastName,
             Email = currentUser.Email,
             Role = currentUser.Role,
+            ProfilePhotoUrl = currentUser.ProfilePhotoUrl,
             PhoneNumber = currentUser.PhoneNumber ?? "",
             Department = currentUser.Department ?? "",
             OfficeLocation = currentUser.OfficeLocation ?? "",
@@ -84,6 +85,41 @@ public class SettingsController : BaseController
         }
 
         TempData["PreferencesSaved"] = "true";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UploadPhoto(IFormFile photo)
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+        if (currentUser == null || photo == null || photo.Length == 0)
+            return RedirectToAction("Index");
+
+        var uploadsFolder = Path.Combine("wwwroot", "uploads", "avatars");
+        Directory.CreateDirectory(uploadsFolder);
+
+        var ext = Path.GetExtension(photo.FileName);
+        var fileName = $"{currentUser.Id}{ext}";
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await photo.CopyToAsync(stream);
+        }
+
+        var photoUrl = $"/uploads/avatars/{fileName}";
+
+        await _ticketApiService.UpdateProfileWithPhotoAsync(currentUser.Id, new HelpDesk.Shared.DTOs.UpdateProfileDto
+        {
+            FirstName = currentUser.FirstName,
+            LastName = currentUser.LastName,
+            PhoneNumber = currentUser.PhoneNumber,
+            Department = currentUser.Department,
+            OfficeLocation = currentUser.OfficeLocation,
+            ProfilePhotoUrl = photoUrl
+        }, token);
+
         return RedirectToAction("Index");
     }
 }

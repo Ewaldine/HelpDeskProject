@@ -13,6 +13,7 @@ public interface ITicketApiService
     Task AddCommentAsync(Guid ticketId, AddCommentDto dto, string accessToken);
     Task<UserDto?> GetCurrentUserAsync(string keycloakId,string accessToken);
     Task<List<CategoryDto>> GetCategoriesAsync(string accessToken);
+    Task<CategoryDto?> CreateCategoryAsync(CreateCategoryDto dto, string accessToken);
     Task<List<UserDto>> GetTechniciansAsync(Guid tenantId, string accessToken);
     Task<ReportsResultDto?> GetReportsAsync(Guid tenantId, string accessToken);
     Task<AdminDashboardDto?> GetAdminDashboardAsync(Guid tenantId, string accessToken);
@@ -49,4 +50,9 @@ public interface ITicketApiService
 
     Task UpdateProfileAsync(Guid userId, UpdateProfileDto dto, string accessToken);
     Task UpdateNotificationPreferencesAsync(Guid userId, NotificationPreferencesDto dto, string accessToken);
+
+    Task<NotificationCountsDto> GetNotificationCountsAsync(Guid userId, string accessToken);
+    Task MarkNotificationReadAsync(Guid userId, Guid notificationId, string accessToken);
+    Task ClearAllNotificationsAsync(Guid userId, string accessToken);
+    Task UpdateProfileWithPhotoAsync(Guid userId, UpdateProfileDto dto, string accessToken);
 }
