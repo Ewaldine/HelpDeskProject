@@ -12,7 +12,7 @@
         <div style="font-weight:600; color:var(--text-dark); font-size:15px;">@DateTime.Now.ToString("HH:mm")</div>
         <div>@DateTime.Now.ToString("dddd, dd MMMM yyyy")</div>
     </div>
-  
+
 </div>
 
 <div class="stats-row">
@@ -54,7 +54,7 @@
         </div>
         <a asp-controller="Tickets" asp-action="UnassignedQueue" class="ticket-link">View all →</a>
     </div>
-    <table>
+    <table class="tickets-table tickets-card">
         <thead>
             <tr>
                 <th>Priority</th>
@@ -116,9 +116,9 @@
         </tbody>
     </table>
 </div>
-<div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px;">
+<div style="display:grid; grid-template-columns: 1fr 340px; gap:24px; align-items:start;">
     <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;" class="make-div-auto">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
                 <div class="card-title">Team Workload</div>
                 <div class="card-subtitle">Capacity utilisation per technician</div>
@@ -149,12 +149,12 @@
                         <div class="workload-bar-fill @barClass" style="width:@(loadPercent)%;"></div>
                     </div>
                 </div>
-                
+
             </div>
         }
     </div>
 
-    <div class="card make-div-auto">
+    <div class="card">
         <div class="card-title">Recent Team Activity</div>
         <div class="card-subtitle">Live actions from your team</div>
 
@@ -170,7 +170,7 @@
                 _ => "fa-solid fa-circle"
             };
 
-            <div class="activity-row">
+            <div class="activity-row make-div-auto">
                 <div class="activity-icon @activity.IconType"><i class="@iconClass"></i></div>
                 <div>
                     <div class="activity-message">@activity.Message</div>
@@ -191,7 +191,7 @@
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
     }
 
-    document.addEventListener('click', function (e) {
+    document.addEventListener('click', function(e) {
         if (!e.target.closest('[id^="dropdown-"]') && !e.target.closest('button[onclick^="toggleAssignDropdown"]')) {
             document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
         }

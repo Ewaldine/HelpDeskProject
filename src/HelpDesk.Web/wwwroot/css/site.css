@@ -294,15 +294,13 @@ body {
         color: var(--red);
     }
 
-/* Cards / tables */
 .card {
     background: white;
     border-radius: 10px;
     border: 1px solid var(--border);
     padding: 24px;
     margin-bottom: 24px;
-    /* remove fixed height so tickets table can grow naturally */
-    height: auto;
+    height:auto;
 }
 
 
