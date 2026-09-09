@@ -1,5 +1,3 @@
-using HelpDesk.Shared.DTOs;
-using HelpDesk.Web.Models;
 using HelpDesk.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,19 +18,10 @@ public class NotificationsController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-        if (currentUser == null) return RedirectToAction("Index", "Home");
+        if (currentUser == null) return RedirectToAction("Login", "Account");
 
-        var notes = await _ticketApiService.GetNotificationsAsync(currentUser.Id, token);
-
-        var vm = new NotificationViewModel
-        {
-            Notifications = notes.OrderByDescending(n => n.CreatedAt).ToList()
-        };
-
-        // Optionally mark all as read once loaded
-        // await _ticketApiService.MarkAllNotificationsReadAsync(currentUser.Id, token);
-
-        return View(vm);
+        var notifications = await _ticketApiService.GetNotificationsAsync(currentUser.Id, token);
+        return View(notifications);
     }
 
     [HttpPost]
@@ -40,20 +29,38 @@ public class NotificationsController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-        if (currentUser == null) return RedirectToAction("Index", "Home");
-        await _ticketApiService.MarkAllNotificationsReadAsync(currentUser.Id, token);
+        if (currentUser != null)
+            await _ticketApiService.MarkAllNotificationsReadAsync(currentUser.Id, token);
         return RedirectToAction("Index");
     }
 
     [HttpPost]
     public async Task<IActionResult> ClearAll()
     {
-        // For now ClearAll behaves the same as MarkAllRead (marks as read).
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-        if (currentUser == null) return RedirectToAction("Index", "Home");
-
-        await _ticketApiService.MarkAllNotificationsReadAsync(currentUser.Id, token);
+        if (currentUser != null)
+            await _ticketApiService.ClearAllNotificationsAsync(currentUser.Id, token);
         return RedirectToAction("Index");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ViewTicket(Guid id, Guid ticketId)
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+        if (currentUser != null)
+            await _ticketApiService.MarkNotificationReadAsync(currentUser.Id, id, token);
+        return RedirectToAction("Details", "Tickets", new { id = ticketId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UnreadCount()
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+        if (currentUser == null) return Json(0);
+        var counts = await _ticketApiService.GetNotificationCountsAsync(currentUser.Id, token);
+        return Json(counts.All);
     }
 }

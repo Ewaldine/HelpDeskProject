@@ -18,7 +18,9 @@
         <h1 class="page-title">Categories</h1>
         <p class="page-subtitle">Manage ticket categories and organization.</p>
     </div>
-    <button class="btn btn-primary">Add Category</button>
+    <button type="button" class="btn btn-primary" id="openCategoryModal">
+        Add Category
+    </button>
 </div>
 
 <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:20px;">
@@ -43,3 +45,346 @@
         </div>
     }
 </div>
+
+
+
+
+<!-- Add Category Modal -->
+<div id="categoryModal" class="category-modal-overlay">
+
+    <div class="category-modal">
+
+        <!-- Modal Header -->
+        <div class="category-modal-header">
+            <h2>Add Category</h2>
+
+            <button type="button" class="modal-close" id="closeCategoryModal">
+                &times;
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="category-modal-body">
+
+            <!-- Category Name -->
+            <div class="form-group">
+                <label for="categoryName">
+                    Category name <span class="required">*</span>
+                </label>
+
+                <input type="text"
+                       id="categoryName"
+                       name="Name"
+                       class="category-input"
+                       placeholder="e.g. Hardware"
+                       required />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="categoryDescription">
+                    Description
+                </label>
+
+                <textarea id="categoryDescription"
+                          name="Description"
+                          class="category-textarea"
+                          placeholder="Brief description of this category"></textarea>
+            </div>
+
+            <!-- Icon Colour -->
+            <div class="form-group">
+                <label>Icon colour</label>
+
+                <div class="icon-colour-options">
+
+                    <button type="button"
+                            class="icon-colour selected"
+                            data-bg="#EFF6FF"
+                            data-color="#3B82F6">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#F3E8FF"
+                            data-color="#9333EA">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#DCFCE7"
+                            data-color="#16A34A">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#FFEDD5"
+                            data-color="#F97316">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#FCE7F3"
+                            data-color="#DB2777">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#F1F5F9"
+                            data-color="#64748B">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#FEF3C7"
+                            data-color="#CA8A04">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                    <button type="button"
+                            class="icon-colour"
+                            data-bg="#FEE2E2"
+                            data-color="#DC2626">
+                        <i class="fa-regular fa-folder-open"></i>
+                    </button>
+
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-label">
+                PREVIEW
+            </div>
+
+            <div class="category-preview">
+
+                <div class="preview-icon"
+                     id="previewIconContainer">
+
+                    <i class="fa-regular fa-folder-open"
+                       id="previewIcon"></i>
+
+                </div>
+
+                <div class="preview-content">
+
+                    <div class="preview-name" id="previewName">
+                        Category name
+                    </div>
+
+                    <div class="preview-description"
+                         id="previewDescription">
+                        Description
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="category-modal-footer">
+
+            <button type="button"
+                    class="btn btn-outline"
+                    id="cancelCategoryModal">
+                Cancel
+            </button>
+
+            <button type="button"
+                    class="btn btn-primary"
+                    id="createCategory">
+                Create Category
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // Modal elements
+    const categoryModal = document.getElementById("categoryModal");
+
+    const openCategoryModal =
+        document.getElementById("openCategoryModal");
+
+    const closeCategoryModal =
+        document.getElementById("closeCategoryModal");
+
+    const cancelCategoryModal =
+        document.getElementById("cancelCategoryModal");
+
+
+    // Open modal
+    openCategoryModal.addEventListener("click", function () {
+
+        categoryModal.classList.add("show");
+
+        document.getElementById("categoryName").focus();
+    });
+
+
+    // Close modal
+    function closeModal() {
+        categoryModal.classList.remove("show");
+    }
+
+
+    closeCategoryModal.addEventListener("click", closeModal);
+
+    cancelCategoryModal.addEventListener("click", closeModal);
+
+
+    // Close when clicking outside the modal
+    categoryModal.addEventListener("click", function (event) {
+
+        if (event.target === categoryModal) {
+            closeModal();
+        }
+
+    });
+
+
+    // ============================
+    // Live preview - Category name
+    // ============================
+
+    const categoryName =
+        document.getElementById("categoryName");
+
+    const previewName =
+        document.getElementById("previewName");
+
+
+    categoryName.addEventListener("input", function () {
+
+        const value = this.value.trim();
+
+        previewName.textContent =
+            value || "Category name";
+
+    });
+
+
+    // ============================
+    // Live preview - Description
+    // ============================
+
+    const categoryDescription =
+        document.getElementById("categoryDescription");
+
+    const previewDescription =
+        document.getElementById("previewDescription");
+
+
+    categoryDescription.addEventListener("input", function () {
+
+        const value = this.value.trim();
+
+        previewDescription.textContent =
+            value || "Description";
+
+    });
+
+
+    // ============================
+    // Icon colour selection
+    // ============================
+
+    const iconColours =
+        document.querySelectorAll(".icon-colour");
+
+    const previewIconContainer =
+        document.getElementById("previewIconContainer");
+
+    const previewIcon =
+        document.getElementById("previewIcon");
+
+
+    iconColours.forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            // Remove selection from all buttons
+            iconColours.forEach(function (item) {
+                item.classList.remove("selected");
+            });
+
+            // Select clicked button
+            this.classList.add("selected");
+
+
+            // Get colours from data attributes
+            const background =
+                this.dataset.bg;
+
+            const color =
+                this.dataset.color;
+
+
+            // Update preview
+            previewIconContainer.style.background =
+                background;
+
+            previewIconContainer.style.color =
+                color;
+
+        });
+
+    });
+
+
+    // Create category - send to server
+    const createCategoryBtn = document.getElementById("createCategory");
+
+    createCategoryBtn.addEventListener("click", async function () {
+        const name = document.getElementById("categoryName").value.trim();
+        const description = document.getElementById("categoryDescription").value.trim();
+
+        if (!name) {
+            alert("Please enter a category name.");
+            return;
+        }
+
+        createCategoryBtn.disabled = true;
+
+        try {
+            const response = await fetch('/Categories/Create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ Name: name, Description: description })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                alert('Failed to create category: ' + text);
+                return;
+            }
+
+            // close modal and reload to show new category
+            closeModal();
+            window.location.reload();
+
+        } catch (err) {
+            console.error(err);
+            alert('Error creating category');
+        } finally {
+            createCategoryBtn.disabled = false;
+        }
+    });
+
+
+</script>

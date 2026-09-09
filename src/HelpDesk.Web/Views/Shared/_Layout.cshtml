@@ -74,8 +74,9 @@
                         </a>
                     }
 
-                    <a asp-controller="Notifications" asp-action="Index" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Notifications" ? "active" : "")">
-                        <i class="fa-regular fa-bell"></i> Notifications
+                    <a asp-controller="Notifications" asp-action="Index" class="nav-item" style="justify-content:space-between;">
+                        <span><i class="fa-regular fa-bell"></i> Notifications</span>
+                        <span id="notifBadge" style="display:none; background:var(--red); color:white; font-size:11px; padding:1px 7px; border-radius:10px;"></span>
                     </a>
 
                     <a asp-controller="Settings" asp-action="Index" class="nav-item">
@@ -184,6 +185,17 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+    fetch('/Notifications/UnreadCount')
+        .then(r => r.json())
+        .then(count => {
+            const badge = document.getElementById('notifBadge');
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'inline-block';
+            }
+        });
+</script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

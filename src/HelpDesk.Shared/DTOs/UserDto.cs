@@ -10,11 +10,10 @@ public class UserDto
     public string KeycloakId { get; set; } = string.Empty;
     public int OpenTicketCount { get; set; }
     // optional profile fields
-
+    public string? ProfilePhotoUrl { get; set; }
     public string? Department { get; set; }
     public string? OfficeLocation { get; set; }
     public string? PhoneNumber { get; set; }
-    public string? ProfileImageUrl { get; set; }
     public bool EmailNotifications { get; set; }
     public bool TicketStatusUpdates { get; set; }
     public bool NewCommentNotifications { get; set; }

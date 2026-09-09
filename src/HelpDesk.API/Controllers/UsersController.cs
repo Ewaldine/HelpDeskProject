@@ -48,6 +48,7 @@ public class UserProfileUpdateDto
             Email = user.Email,
             Role = user.Role.ToString(),
             KeycloakId = user.KeycloakId,
+            ProfilePhotoUrl = user.ProfilePhotoUrl,
             PhoneNumber = user.PhoneNumber,
             Department = user.Department,
             OfficeLocation = user.OfficeLocation,
@@ -57,19 +58,19 @@ public class UserProfileUpdateDto
             WeeklySummary = user.WeeklySummary
         });
     }
-
-    [HttpGet("{id}/preferences")]
-    public async Task<ActionResult<object>> GetPreferences(Guid id)
-    {
-        var user = await _context.Users.FindAsync(id);
-        if (user == null) return NotFound();
-
-        return Ok(new
+    /*
+        [HttpGet("{id}/preferences")]
+        public async Task<ActionResult<object>> GetPreferences(Guid id)
         {
-            InAppNotifications = user.InAppNotificationsEnabled
-        });
-    }
+            var user = await _context.Users.FindAsync(id);
+            if (user == null) return NotFound();
 
+            return Ok(new
+            {
+                InAppNotifications = user.InAppNotificationsEnabled
+            });
+        }
+    
     [HttpPut("{id}/preferences")]
     public async Task<IActionResult> UpdatePreferences(Guid id, [FromBody] PreferencesUpdateDto dto)
     {
@@ -79,7 +80,7 @@ public class UserProfileUpdateDto
         user.InAppNotificationsEnabled = dto.InAppNotifications;
         await _context.SaveChangesAsync();
         return NoContent();
-    }
+    }*/
 
     [HttpPut("{id}/profile")]
     public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
@@ -92,11 +93,12 @@ public class UserProfileUpdateDto
         user.PhoneNumber = dto.PhoneNumber;
         user.Department = dto.Department;
         user.OfficeLocation = dto.OfficeLocation;
+        if (!string.IsNullOrEmpty(dto.ProfilePhotoUrl))
+            user.ProfilePhotoUrl = dto.ProfilePhotoUrl;
 
         await _userRepository.UpdateAsync(user);
         return NoContent();
     }
-
     [HttpPut("{id}/notifications")]
     public async Task<IActionResult> UpdateNotifications(Guid id, [FromBody] NotificationPreferencesDto dto)
     {
@@ -134,6 +136,7 @@ public class UserProfileUpdateDto
             Email = t.Email,
             Role = t.Role.ToString(),
             KeycloakId = t.KeycloakId,
+            ProfilePhotoUrl = t.ProfilePhotoUrl,
             OpenTicketCount = openCounts.GetValueOrDefault(t.Id, 0)
         }));
     }
