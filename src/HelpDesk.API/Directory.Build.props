@@ -1,0 +1,7 @@
+<Project>
+  <ItemGroup>
+	<!-- Ensure HelpDesk.API builds against project references for local projects -->
+	<ProjectReference Include="..\HelpDesk.Core\HelpDesk.Core.csproj" />
+	<ProjectReference Include="..\HelpDesk.Infrastructure\HelpDesk.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

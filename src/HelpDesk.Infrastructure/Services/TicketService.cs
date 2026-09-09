@@ -51,6 +51,18 @@ public class TicketService : ITicketService
 
         await AddHistoryAsync(ticketId, "Assigned", oldAssignee?.ToString(), technicianId.ToString(), assignedById);
 
+        var assignedByUser = await _context.Users.FindAsync(assignedById);
+        await _context.Notifications.AddAsync(new Notification
+        {
+            UserId = technicianId,
+            TicketId = ticketId,
+            Type = NotificationType.Assignment,
+            IconType = "assignment",
+            Title = "Ticket assigned to you",
+            Message = $"{(assignedByUser != null ? $"{assignedByUser.FirstName} {assignedByUser.LastName}" : "Someone")} assigned TKT-{ticketId.ToString().Substring(0, 8).ToUpper()} \"{ticket.Title}\" to you."
+        });
+        await _context.SaveChangesAsync();
+
         return await _context.Tickets
        .Include(t => t.SubmittedBy)
        .Include(t => t.AssignedTo)
@@ -105,6 +117,20 @@ public class TicketService : ITicketService
 
         await AddHistoryAsync(ticketId, "StatusChanged", oldStatus.ToString(), newStatus.ToString(), changedById);
 
+        if (ticket.SubmittedById != changedById)
+        {
+            var changedByUser = await _context.Users.FindAsync(changedById);
+            var changerName = changedByUser != null ? $"{changedByUser.FirstName} {changedByUser.LastName}" : "Someone";
+            var ticketRef = $"TKT-{ticket.Id.ToString().Substring(0, 8).ToUpper()}";
+
+            var notif = newStatus == TicketStatus.Resolved
+                ? new Notification { UserId = ticket.SubmittedById, TicketId = ticket.Id, Type = NotificationType.Ticket, IconType = "resolved", Title = "Ticket resolved", Message = $"Your ticket {ticketRef} \"{ticket.Title}\" has been marked as resolved." }
+                : new Notification { UserId = ticket.SubmittedById, TicketId = ticket.Id, Type = NotificationType.Ticket, IconType = "clock", Title = "Ticket status updated", Message = $"{ticketRef} \"{ticket.Title}\" has been moved from {oldStatus} to {newStatus} by {changerName}." };
+
+            await _context.Notifications.AddAsync(notif);
+            await _context.SaveChangesAsync();
+        }
+
         if (wasEscalated)
         {
             var changedByUser = await _context.Users.FindAsync(changedById);
@@ -121,7 +147,7 @@ public class TicketService : ITicketService
         return ticket;
     }
 
-    private async Task NotifyTeamLeadsAndAdminsAsync(Guid tenantId, Guid ticketId, string message)
+    /*private async Task NotifyTeamLeadsAndAdminsAsync(Guid tenantId, Guid ticketId, string message)
     {
         var recipients = await _context.Users
             .Where(u => u.TenantId == tenantId && (u.Role == UserRole.TeamLead || u.Role == UserRole.Admin) && u.IsActive)
@@ -129,6 +155,8 @@ public class TicketService : ITicketService
 
         foreach (var recipient in recipients)
         {
+            if (!recipient.InAppNotificationsEnabled) continue;
+
             var notification = new Notification
             {
                 UserId = recipient.Id,
@@ -141,22 +169,19 @@ public class TicketService : ITicketService
         }
 
         await _context.SaveChangesAsync();
-    }
+    }*/
 
     public async Task<Ticket> EscalateTicketAsync(Guid ticketId, Guid escalatedById)
     {
         var ticket = await _ticketRepository.GetByIdAsync(ticketId)
-    ?? throw new InvalidOperationException("Ticket not found");
-
-        if (ticket.Status == TicketStatus.Escalated)
-            throw new InvalidOperationException("This ticket is already escalated.");
+            ?? throw new InvalidOperationException("Ticket not found");
 
         if (ticket.Status == TicketStatus.Resolved || ticket.Status == TicketStatus.Closed)
             throw new InvalidOperationException("Cannot escalate a resolved or closed ticket.");
 
-
         var oldPriority = ticket.Priority;
-        ticket.Status = TicketStatus.Escalated;
+
+        // Mark SLA breach and increase priority up to Critical; do not change status
         ticket.IsSlaBreach = true;
 
         if (ticket.Priority < TicketPriority.Critical)
@@ -166,19 +191,118 @@ public class TicketService : ITicketService
 
         await _context.SaveChangesAsync();
 
-        await AddHistoryAsync(ticketId, "Escalated", oldPriority.ToString(), ticket.Priority.ToString(), escalatedById);
+        await AddHistoryAsync(
+            ticketId,
+            "Escalated",
+            oldPriority.ToString(),
+            ticket.Priority.ToString(),
+            escalatedById
+        );
+
+        /*  // Notify assigned technician if present and accepts in-app notifications
+        if (ticket.AssignedToId != null)
+        {
+            var assigned = await _context.Users.FindAsync(ticket.AssignedToId.Value);
+
+            if (assigned != null && assigned.InAppNotificationsEnabled)
+            {
+                var notification = new Notification
+                {
+                    UserId = ticket.AssignedToId.Value,
+                    TicketId = ticket.Id,
+                    Type = NotificationType.Ticket,
+                    IconType = "escalated",
+                    Title = "Ticket Escalated",
+                    Message = $"Ticket '{ticket.Title}' was escalated and priority changed to {ticket.Priority}.",
+                    IsRead = false
+                };
+
+                await _context.Notifications.AddAsync(notification);
+                await _context.SaveChangesAsync();
+            }
+        }
+        */
+
+        // Notify Team Leads and Admins
+        await NotifyTeamLeadsAndAdminsAsync(
+            ticket.TenantId,
+            ticket.Id,
+            $"Ticket '{ticket.Title}' was escalated and priority changed to {ticket.Priority}."
+        );
 
         return await _context.Tickets
-       .Include(t => t.SubmittedBy)
-       .Include(t => t.AssignedTo)
-       .Include(t => t.Category)
-       .FirstAsync(t => t.Id == ticketId);
+            .Include(t => t.SubmittedBy)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.Category)
+            .FirstAsync(t => t.Id == ticketId);
+    }
+
+    private async Task NotifyTeamLeadsAndAdminsAsync(
+        Guid tenantId,
+        Guid ticketId,
+        string message,
+        string title = "Escalated Ticket Updated",
+        string iconType = "escalated")
+    {
+        var recipients = await _context.Users
+            .Where(u =>
+                u.TenantId == tenantId &&
+                (u.Role == UserRole.TeamLead || u.Role == UserRole.Admin) &&
+                u.IsActive)
+            .ToListAsync();
+
+        foreach (var recipient in recipients)
+        {
+            await _context.Notifications.AddAsync(new Notification
+            {
+                UserId = recipient.Id,
+                TicketId = ticketId,
+                Type = NotificationType.Ticket,
+                IconType = iconType,
+                Title = title,
+                Message = message,
+                IsRead = false
+            });
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     public async Task AddCommentAsync(Guid ticketId, TicketComment comment)
     {
         comment.TicketId = ticketId;
         await _context.TicketComments.AddAsync(comment);
+        await _context.SaveChangesAsync();
+
+        var ticket = await _context.Tickets.FindAsync(ticketId);
+        var author = await _context.Users.FindAsync(comment.AuthorId);
+        if (ticket == null || author == null) return;
+
+        var ticketRef = $"TKT-{ticket.Id.ToString().Substring(0, 8).ToUpper()}";
+        var authorName = $"{author.FirstName} {author.LastName}";
+        var preview = comment.Content.Length > 60 ? comment.Content[..60] + "..." : comment.Content;
+
+        var recipientIds = new List<Guid> { ticket.SubmittedById };
+        if (ticket.AssignedToId.HasValue) recipientIds.Add(ticket.AssignedToId.Value);
+        recipientIds = recipientIds.Distinct().Where(id => id != comment.AuthorId).ToList();
+
+        foreach (var recipientId in recipientIds)
+        {
+            // Never notify the requester about an internal note
+            if (comment.IsInternalNote && recipientId == ticket.SubmittedById) continue;
+
+            await _context.Notifications.AddAsync(new Notification
+            {
+                UserId = recipientId,
+                TicketId = ticket.Id,
+                Type = NotificationType.Comment,
+                IconType = comment.IsInternalNote ? "note" : "comment",
+                Title = comment.IsInternalNote ? "Internal note added" : "New comment on your ticket",
+                Message = comment.IsInternalNote
+                    ? $"{authorName} added an internal note to {ticketRef} \"{ticket.Title}\"."
+                    : $"{authorName} replied on {ticketRef} \"{ticket.Title}\": \"{preview}\""
+            });
+        }
         await _context.SaveChangesAsync();
     }
 

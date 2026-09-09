@@ -234,15 +234,8 @@ public TicketsController(
     [Authorize(Roles = "Technician,TeamLead,Admin")]
     public async Task<ActionResult<TicketDto>> Escalate(Guid id, [FromBody] EscalateTicketDto dto)
     {
-        try
-        {
-            var ticket = await _ticketService.EscalateTicketAsync(id, dto.EscalatedById);
-            return Ok(MapToDto(ticket));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        // Manual escalation endpoint has been disabled. SLA escalation is handled automatically by the system.
+        return BadRequest("Manual escalation is disabled. SLA escalation is handled automatically.");
     }
 
 

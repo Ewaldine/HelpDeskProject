@@ -9,6 +9,8 @@ public class Ticket : BaseEntity
     public TicketStatus Status { get; set; } = TicketStatus.Open;
     public TicketPriority Priority { get; set; } = TicketPriority.Medium;
     public bool IsSlaBreach { get; set; } = false;
+    // Flag used to prevent repeated SLA warning notifications
+    public bool SlaWarningSent { get; set; } = false;
     public DateTime? ResolvedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
     public DateTime ResponseDueAt { get; set; }
@@ -26,6 +28,7 @@ public class Ticket : BaseEntity
 
     public Guid CategoryId { get; set; }
     public Category Category { get; set; } = null!;
+
 
     public ICollection<TicketComment> Comments { get; set; } = new List<TicketComment>();
     public ICollection<TicketHistory> History { get; set; } = new List<TicketHistory>();

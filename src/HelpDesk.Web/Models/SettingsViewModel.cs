@@ -8,6 +8,7 @@ public class SettingsViewModel
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
+    public string? ProfilePhotoUrl { get; set; }
     public string PhoneNumber { get; set; } = string.Empty;
     public string OfficeLocation { get; set; } = string.Empty;
     public DateTime LastUpdated { get; set; }
@@ -16,4 +17,6 @@ public class SettingsViewModel
     public bool TicketStatusUpdates { get; set; } = true;
     public bool NewComments { get; set; } = true;
     public bool WeeklySummary { get; set; } = false;
+    public bool InAppNotifications { get; set; } = true;
+    public string? ProfileImageUrl { get; set; }
 }

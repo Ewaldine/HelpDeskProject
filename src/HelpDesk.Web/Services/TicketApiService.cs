@@ -104,6 +104,14 @@ public class TicketApiService : ITicketApiService
         return result ?? new List<CategoryDto>();
     }
 
+    public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.PostAsJsonAsync("api/Categories", dto);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<CategoryDto>();
+    }
+
     public async Task<ReportsResultDto?> GetReportsAsync(Guid tenantId, string accessToken)
     {
         var client = CreateClient(accessToken);
@@ -127,6 +135,32 @@ public class TicketApiService : ITicketApiService
         return await response.Content.ReadFromJsonAsync<TeamLeadDashboardDto>();
     }
 
+
+
+    public async Task<UserPreferencesDto?> GetUserPreferencesAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.GetAsync($"api/Users/{userId}/preferences");
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserPreferencesDto>();
+    }
+
+    public async Task UpdateUserPreferencesAsync(Guid userId, object preferences, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/preferences", preferences);
+    }
+
+    public async Task<UserDto?> UpdateUserProfileAsync(Guid userId, object profile, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.PutAsJsonAsync($"api/Users/{userId}/profile", profile);
+        if (!response.IsSuccessStatusCode) return null;
+        return await response.Content.ReadFromJsonAsync<UserDto>();
+    }
+
+
+
     public async Task<(bool Success, string? ErrorMessage)> EscalateAsync(Guid ticketId, Guid escalatedById, string accessToken)
     {
         var client = CreateClient(accessToken);
@@ -137,5 +171,55 @@ public class TicketApiService : ITicketApiService
 
         var errorMessage = await response.Content.ReadAsStringAsync();
         return (false, errorMessage);
+    }
+
+    public async Task UpdateProfileAsync(Guid userId, UpdateProfileDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/profile", dto);
+    }
+
+    public async Task UpdateNotificationPreferencesAsync(Guid userId, NotificationPreferencesDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/notifications", dto);
+    }
+
+    public async Task<List<NotificationDto>> GetNotificationsAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var result = await client.GetFromJsonAsync<List<NotificationDto>>($"api/Notifications/{userId}");
+        return result ?? new List<NotificationDto>();
+    }
+
+    public async Task<NotificationCountsDto> GetNotificationCountsAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var result = await client.GetFromJsonAsync<NotificationCountsDto>($"api/Notifications/{userId}/counts");
+        return result ?? new NotificationCountsDto();
+    }
+
+    public async Task MarkAllNotificationsReadAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsync($"api/Notifications/{userId}/mark-all-read", null);
+    }
+
+    public async Task MarkNotificationReadAsync(Guid userId, Guid notificationId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsync($"api/Notifications/{userId}/{notificationId}/read", null);
+    }
+
+    public async Task ClearAllNotificationsAsync(Guid userId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.DeleteAsync($"api/Notifications/{userId}/clear-all");
+    }
+
+    public async Task UpdateProfileWithPhotoAsync(Guid userId, UpdateProfileDto dto, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.PutAsJsonAsync($"api/Users/{userId}/profile", dto);
     }
 }

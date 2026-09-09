@@ -16,4 +16,17 @@ public class User : BaseEntity
 
     public ICollection<Ticket> SubmittedTickets { get; set; } = new List<Ticket>();
     public ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
+
+    // Whether the user receives in-app (real-time) notifications
+    //public bool InAppNotificationsEnabled { get; set; } = true;
+
+    // Optional profile fields
+    public string? PhoneNumber { get; set; }
+    public string? Department { get; set; }
+    public string? OfficeLocation { get; set; }
+    public string? ProfilePhotoUrl { get; set; }
+    public bool EmailNotifications { get; set; } = true;
+    public bool TicketStatusUpdates { get; set; } = true;
+    public bool NewCommentNotifications { get; set; } = true;
+    public bool WeeklySummary { get; set; } = false;
 }

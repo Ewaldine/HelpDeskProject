@@ -62,8 +62,8 @@
 
 <div style="height:16px;"></div>
 
-<div class="card make-div-auto">
-    <table>
+<div class="card make-div-auto tickets-card">
+    <table class="tickets-table">
         <thead>
             <tr>
                 <th>Ticket ID</th>
@@ -88,7 +88,7 @@
             @foreach (var ticket in Model.Tickets)
             {
                 <tr data-title="@ticket.Title.ToLower()" data-status="@ticket.Status.ToLower().Replace(" ", "")" data-priority="@ticket.Priority.ToLower()" data-category="@(ticket.CategoryName?.ToLower() ?? "")">
-                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">#@ticket.Id.ToString().Substring(0, 8)</a></td>
+                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">TKT-@ticket.Id.ToString().Substring(0, 8).ToUpper()</a></td>
                     <td>@ticket.Title</td>
                     <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
                     <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
@@ -132,13 +132,18 @@
     }
 
     function applyFilters() {
-        const searchQuery = document.getElementById('ticketSearch').value.toLowerCase();
+        const searchQuery = (document.getElementById('ticketSearch').value || '').trim().toLowerCase();
 
         document.querySelectorAll('tbody tr[data-title]').forEach(row => {
-            const matchesSearch = row.getAttribute('data-title').includes(searchQuery);
-            const matchesStatus = !activeFilters.status || row.getAttribute('data-status') === activeFilters.status;
-            const matchesPriority = !activeFilters.priority || row.getAttribute('data-priority') === activeFilters.priority;
-            const matchesCategory = !activeFilters.category || row.getAttribute('data-category') === activeFilters.category;
+            const title = (row.getAttribute('data-title') || '').toLowerCase();
+            const status = (row.getAttribute('data-status') || '').toLowerCase();
+            const priority = (row.getAttribute('data-priority') || '').toLowerCase();
+            const category = (row.getAttribute('data-category') || '').toLowerCase();
+
+            const matchesSearch = !searchQuery || title.includes(searchQuery);
+            const matchesStatus = !activeFilters.status || status === activeFilters.status;
+            const matchesPriority = !activeFilters.priority || priority === activeFilters.priority;
+            const matchesCategory = !activeFilters.category || category === activeFilters.category;
 
             row.style.display = (matchesSearch && matchesStatus && matchesPriority && matchesCategory) ? '' : 'none';
         });

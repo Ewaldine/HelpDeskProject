@@ -1,0 +1,126 @@
+@model List<HelpDesk.Shared.DTOs.NotificationDto>
+@{
+    ViewData["Title"] = "Notifications";
+    var unreadCount = Model.Count(n => !n.IsRead);
+    var iconMap = new Dictionary<string, (string Icon, string Bg, string Color)>
+    {
+        { "warning", ("fa-solid fa-triangle-exclamation", "#FEE2E2", "#EF4444") },
+        { "comment", ("fa-regular fa-comment", "#EFF6FF", "#3B82F6") },
+        { "note", ("fa-regular fa-comment", "#EFF6FF", "#3B82F6") },
+        { "assignment", ("fa-regular fa-user", "#F3E8FF", "#9333EA") },
+        { "clock", ("fa-regular fa-clock", "#FEF9C3", "#CA8A04") },
+        { "resolved", ("fa-solid fa-check", "#DCFCE7", "#16A34A") },
+        { "escalated", ("fa-solid fa-arrow-up", "#FFEDD5", "#F97316") }
+    };
+    string TimeAgo(DateTime dt)
+    {
+        var span = DateTime.UtcNow - dt;
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes} min ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours} hr{((int)span.TotalHours == 1 ? "" : "s")} ago";
+        return $"{(int)span.TotalDays} day{((int)span.TotalDays == 1 ? "" : "s")} ago";
+    }
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Notifications</h1>
+        <p class="page-subtitle">@(unreadCount > 0 ? $"You have {unreadCount} unread notifications." : "You're all caught up.")</p>
+    </div>
+    <div style="display:flex; gap:10px;">
+        <form asp-action="MarkAllRead" method="post"><button type="submit" class="btn btn-outline"><i class="fa-solid fa-check"></i> Mark all read</button></form>
+        <form asp-action="ClearAll" method="post"><button type="submit" class="btn btn-outline" style="color:var(--red); border-color:#FECACA;"><i class="fa-solid fa-trash"></i> Clear all</button></form>
+    </div>
+</div>
+
+<div style="display:flex; gap:24px; border-bottom:1px solid var(--border); margin-bottom:20px;">
+    @{
+        var tabs = new (string Key, string Label)[] { ("all",""), ("Ticket","Tickets"), ("Comment","Comments"), ("Assignment","Assignments"), ("System","System") };
+    }
+    @foreach (var tab in tabs)
+    {
+        var label = tab.Key == "all" ? "All" : tab.Label;
+        var count = tab.Key == "all" ? unreadCount : Model.Count(n => !n.IsRead && n.Type == tab.Key);
+        <button class="notif-tab" data-filter="@tab.Key" onclick="filterNotifications('@tab.Key', this)">
+            @label @if (count > 0) { <span class="notif-tab-badge">@count</span> }
+        </button>
+    }
+</div>
+
+@{
+    var unread = Model.Where(n => !n.IsRead).ToList();
+    var read = Model.Where(n => n.IsRead).ToList();
+}
+
+<div id="notifList">
+    @if (!Model.Any())
+    {
+        <div class="card" style="text-align:center; padding:48px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+                <i class="fa-solid fa-bell-slash" style="color:var(--text-gray);"></i>
+            </div>
+            <div style="font-weight:600; margin-bottom:4px;">No notifications here</div>
+            <div style="color:var(--text-gray); font-size:14px;">When something needs your attention, it'll show up here.</div>
+        </div>
+    }
+
+    @if (unread.Any())
+    {
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">New</div>
+        <div class="card" style="padding:0; margin-bottom:24px;">
+            @foreach (var n in unread)
+            {
+                var (icon, bg, color) = iconMap.GetValueOrDefault(n.IconType, ("fa-solid fa-bell", "#F1F5F9", "#64748B"));
+                <div class="notif-row" data-type="@n.Type" style="background:#F8FAFC;">
+                    <div class="notif-icon" style="background:@bg; color:@color;"><i class="@icon"></i></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; font-size:14px;">@n.Title</div>
+                        <div style="color:var(--text-gray); font-size:13px; margin:4px 0;">@n.Message</div>
+                        <div style="display:flex; gap:14px; align-items:center;">
+                            <span style="font-size:12px; color:var(--text-gray);">@TimeAgo(n.CreatedAt)</span>
+                            @if (n.TicketId.HasValue)
+                            {
+                                <a asp-action="ViewTicket" asp-route-id="@n.Id" asp-route-ticketId="@n.TicketId" style="font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;">View @n.TicketNumber</a>
+                            }
+                        </div>
+                    </div>
+                    <div style="width:8px; height:8px; border-radius:50%; background:var(--blue); margin-top:6px;"></div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (read.Any())
+    {
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Earlier</div>
+        <div class="card" style="padding:0;">
+            @foreach (var n in read)
+            {
+                var (icon, bg, color) = iconMap.GetValueOrDefault(n.IconType, ("fa-solid fa-bell", "#F1F5F9", "#64748B"));
+                <div class="notif-row" data-type="@n.Type">
+                    <div class="notif-icon" style="background:@bg; color:@color;"><i class="@icon"></i></div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; font-size:14px;">@n.Title</div>
+                        <div style="color:var(--text-gray); font-size:13px; margin:4px 0;">@n.Message</div>
+                        <div style="display:flex; gap:14px; align-items:center;">
+                            <span style="font-size:12px; color:var(--text-gray);">@TimeAgo(n.CreatedAt)</span>
+                            @if (n.TicketId.HasValue)
+                            {
+                                <a asp-action="ViewTicket" asp-route-id="@n.Id" asp-route-ticketId="@n.TicketId" style="font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;">View @n.TicketNumber</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    function filterNotifications(type, btn) {
+        document.querySelectorAll('.notif-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.notif-row').forEach(row => {
+            row.style.display = (type === 'all' || row.getAttribute('data-type') === type) ? 'flex' : 'none';
+        });
+    }
+</script>
