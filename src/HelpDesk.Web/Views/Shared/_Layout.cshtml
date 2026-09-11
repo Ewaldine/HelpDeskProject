@@ -73,7 +73,12 @@
                             <i class="fa-solid fa-chart-column"></i> Reports
                         </a>
                     }
-
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div style="background:var(--green-bg); border:1px solid #BBF7D0; color:var(--green); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;">
+                            <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
+                        </div>
+                    }
                     <a asp-controller="Notifications" asp-action="Index" class="nav-item" style="justify-content:space-between;">
                         <span><i class="fa-regular fa-bell"></i> Notifications</span>
                         <span id="notifBadge" style="display:none; background:var(--red); color:white; font-size:11px; padding:1px 7px; border-radius:10px;"></span>
