@@ -55,4 +55,6 @@ public interface ITicketApiService
     Task MarkNotificationReadAsync(Guid userId, Guid notificationId, string accessToken);
     Task ClearAllNotificationsAsync(Guid userId, string accessToken);
     Task UpdateProfileWithPhotoAsync(Guid userId, UpdateProfileDto dto, string accessToken);
+
+    Task DeleteNotificationAsync(Guid userId, Guid notificationId, string accessToken);
 }

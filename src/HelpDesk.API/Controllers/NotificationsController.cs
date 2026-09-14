@@ -85,4 +85,14 @@ public class NotificationsController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    [HttpDelete("{userId}/{id}")]
+    public async Task<IActionResult> DeleteOne(Guid userId, Guid id)
+    {
+        var notif = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+        if (notif == null) return NotFound();
+        notif.IsDeleted = true;
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
