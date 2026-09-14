@@ -64,11 +64,13 @@ public class TicketApiService : ITicketApiService
         var result = await client.GetFromJsonAsync<List<UserDto>>($"api/Users/technicians/{tenantId}");
         return result ?? new List<UserDto>();
     }
-    public async Task<bool> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken)
+    public async Task<(bool Success, string? ErrorMessage)> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken)
     {
         var client = CreateClient(accessToken);
         var response = await client.PutAsJsonAsync($"api/Tickets/{ticketId}/assign", dto);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return (true, null);
+        var error = await response.Content.ReadAsStringAsync();
+        return (false, error);
     }
 
     public async Task<(bool Success, string? ErrorMessage)> UpdateStatusAsync(Guid ticketId, UpdateStatusDto dto, string accessToken)
