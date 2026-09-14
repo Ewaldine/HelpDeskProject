@@ -63,4 +63,24 @@ public class NotificationsController : BaseController
         var counts = await _ticketApiService.GetNotificationCountsAsync(currentUser.Id, token);
         return Json(counts.All);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> MarkRead(Guid id)
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+        if (currentUser != null)
+            await _ticketApiService.MarkNotificationReadAsync(currentUser.Id, id, token);
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteOne(Guid id)
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+        if (currentUser != null)
+            await _ticketApiService.DeleteNotificationAsync(currentUser.Id, id, token);
+        return RedirectToAction("Index");
+    }
 }

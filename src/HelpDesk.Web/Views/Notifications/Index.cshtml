@@ -70,20 +70,16 @@
             @foreach (var n in unread)
             {
                 var (icon, bg, color) = iconMap.GetValueOrDefault(n.IconType, ("fa-solid fa-bell", "#F1F5F9", "#64748B"));
-                <div class="notif-row" data-type="@n.Type" style="background:#F8FAFC;">
-                    <div class="notif-icon" style="background:@bg; color:@color;"><i class="@icon"></i></div>
-                    <div style="flex:1;">
-                        <div style="font-weight:600; font-size:14px;">@n.Title</div>
-                        <div style="color:var(--text-gray); font-size:13px; margin:4px 0;">@n.Message</div>
-                        <div style="display:flex; gap:14px; align-items:center;">
-                            <span style="font-size:12px; color:var(--text-gray);">@TimeAgo(n.CreatedAt)</span>
-                            @if (n.TicketId.HasValue)
-                            {
-                                <a asp-action="ViewTicket" asp-route-id="@n.Id" asp-route-ticketId="@n.TicketId" style="font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;">View @n.TicketNumber</a>
-                            }
-                        </div>
-                    </div>
-                    <div style="width:8px; height:8px; border-radius:50%; background:var(--blue); margin-top:6px;"></div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    @if (!n.IsRead)
+                    {
+                        <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" style="display:inline;">
+                            <button type="submit" title="Mark as read" style="background:none; border:none; color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-check"></i></button>
+                        </form>
+                    }
+                    <form asp-action="DeleteOne" asp-route-id="@n.Id" method="post" style="display:inline;">
+                        <button type="submit" title="Delete" style="background:none; border:none; color:var(--red); cursor:pointer; padding:4px;"><i class="fa-solid fa-trash"></i></button>
+                    </form>
                 </div>
             }
         </div>
@@ -96,19 +92,16 @@
             @foreach (var n in read)
             {
                 var (icon, bg, color) = iconMap.GetValueOrDefault(n.IconType, ("fa-solid fa-bell", "#F1F5F9", "#64748B"));
-                <div class="notif-row" data-type="@n.Type">
-                    <div class="notif-icon" style="background:@bg; color:@color;"><i class="@icon"></i></div>
-                    <div style="flex:1;">
-                        <div style="font-weight:600; font-size:14px;">@n.Title</div>
-                        <div style="color:var(--text-gray); font-size:13px; margin:4px 0;">@n.Message</div>
-                        <div style="display:flex; gap:14px; align-items:center;">
-                            <span style="font-size:12px; color:var(--text-gray);">@TimeAgo(n.CreatedAt)</span>
-                            @if (n.TicketId.HasValue)
-                            {
-                                <a asp-action="ViewTicket" asp-route-id="@n.Id" asp-route-ticketId="@n.TicketId" style="font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;">View @n.TicketNumber</a>
-                            }
-                        </div>
-                    </div>
+                <div style="display:flex; gap:6px; flex-shrink:0;">
+                    @if (!n.IsRead)
+                    {
+                        <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" style="display:inline;">
+                            <button type="submit" title="Mark as read" style="background:none; border:none; color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-check"></i></button>
+                        </form>
+                    }
+                    <form asp-action="DeleteOne" asp-route-id="@n.Id" method="post" style="display:inline;">
+                        <button type="submit" title="Delete" style="background:none; border:none; color:var(--red); cursor:pointer; padding:4px;"><i class="fa-solid fa-trash"></i></button>
+                    </form>
                 </div>
             }
         </div>

@@ -224,4 +224,10 @@ public class TicketApiService : ITicketApiService
         var client = CreateClient(accessToken);
         await client.PutAsJsonAsync($"api/Users/{userId}/profile", dto);
     }
+
+    public async Task DeleteNotificationAsync(Guid userId, Guid notificationId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.DeleteAsync($"api/Notifications/{userId}/{notificationId}");
+    }
 }
