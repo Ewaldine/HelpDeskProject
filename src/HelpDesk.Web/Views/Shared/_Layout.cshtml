@@ -73,12 +73,7 @@
                             <i class="fa-solid fa-chart-column"></i> Reports
                         </a>
                     }
-                    @if (TempData["SuccessMessage"] != null)
-                    {
-                        <div style="background:var(--green-bg); border:1px solid #BBF7D0; color:var(--green); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;">
-                            <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
-                        </div>
-                    }
+                   
                     <a asp-controller="Notifications" asp-action="Index" class="nav-item" style="justify-content:space-between;">
                         <span><i class="fa-regular fa-bell"></i> Notifications</span>
                         <span id="notifBadge" style="display:none; background:var(--red); color:white; font-size:11px; padding:1px 7px; border-radius:10px;"></span>
@@ -89,18 +84,7 @@
                     </a>
                 </nav>
 
-                <div class="sidebar-footer" style="justify-content: space-between;">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <div class="user-avatar">@(User.Identity.Name?.Substring(0, Math.Min(2, User.Identity.Name.Length)).ToUpper())</div>
-                        <div>
-                            <div class="user-name">@User.Identity.Name</div>
-                            <div class="user-role">@(User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? "User")</div>
-                        </div>
-                    </div>
-                    <a asp-controller="Account" asp-action="Logout" style="color:#94A3B8; font-size:16px;" title="Logout">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                    </a>
-                </div>
+                @await Component.InvokeAsync("UserProfile")
             </aside>
 
             <main class="main-content">

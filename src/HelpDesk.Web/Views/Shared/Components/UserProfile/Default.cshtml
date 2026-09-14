@@ -1,0 +1,23 @@
+@model HelpDesk.Shared.DTOs.UserDto?
+@if (Model != null)
+{
+    <div class="sidebar-footer" style="justify-content: space-between;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            @if (!string.IsNullOrEmpty(Model.ProfilePhotoUrl))
+            {
+                <img src="@Model.ProfilePhotoUrl" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
+            }
+            else
+            {
+                <div class="user-avatar">@(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())</div>
+            }
+            <div>
+                <div class="user-name">@Model.FirstName @Model.LastName</div>
+                <div class="user-role">@Model.Role</div>
+            </div>
+        </div>
+        <a asp-controller="Account" asp-action="Logout" style="color:#94A3B8; font-size:16px;" title="Logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </a>
+    </div>
+}
