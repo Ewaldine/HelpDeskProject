@@ -171,7 +171,7 @@
                     <i class="fa-regular fa-clock" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
                     <div>
                         <div style="font-size:12px; color:var(--text-gray);">Last Updated</div>
-                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy, hh:mm tt")</div>
                     </div>
                 </div>
             </div>
@@ -179,7 +179,7 @@
 
         <!-- SLA Status -->
         @{ 
-            var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow;
+            var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow.ToLocalTime();
         }
         <div class="card make-div-auto" style="@(isOverdue ? "background:#FEF2F2; border-color:#FECACA;" : "")">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -193,7 +193,7 @@
             }
             else
             {
-                var timeLeft = Model.Ticket.ResolutionDueAt - DateTime.UtcNow;
+                var timeLeft = Model.Ticket.ResolutionDueAt - DateTime.UtcNow.ToLocalTime();
                 <div style="font-size:18px; font-weight:700; color:var(--green);">On Track</div>
                 <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">
                     @timeLeft.Hours hrs @timeLeft.Minutes min remaining

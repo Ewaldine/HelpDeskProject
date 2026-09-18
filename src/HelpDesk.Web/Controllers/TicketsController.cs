@@ -24,53 +24,45 @@ public class TicketsController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+
         var allTickets = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
-        List<HelpDesk.Shared.DTOs.TicketDto> myTickets;
-        string subtitle;
+        var myTickets = currentUser != null
+            ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList()
+            : new List<HelpDesk.Shared.DTOs.TicketDto>();
 
-        if (User.IsInRole("Technician"))
+        var model = new TicketListViewModel
         {
-            myTickets = currentUser != null ? allTickets.Where(t => t.AssignedToId == currentUser.Id).ToList() : new();
-            subtitle = "Tickets assigned to you";
-        }
-        else if (User.IsInRole("TeamLead"))
-        {
-            myTickets = currentUser != null
-                ? allTickets.Where(t => t.SubmittedById == currentUser.Id || t.AssignedToId == currentUser.Id).ToList()
-                : new();
-            subtitle = "Tickets you've submitted or assigned to yourself";
-        }
-        else
-        {
-            myTickets = currentUser != null ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList() : new();
-            subtitle = "Tickets you've submitted";
-        }
+            PageTitle = "My Tickets",
+            PageSubtitle = "Tickets you've submitted",
+            Tickets = myTickets
+        };
 
-        return View("TicketList", new TicketListViewModel { PageTitle = "My Tickets", PageSubtitle = subtitle, Tickets = myTickets });
+        return View("TicketList", model);
+    }
+
+    public async Task<IActionResult> AssignedToMe()
+    {
+        var token = await GetAccessTokenAsync();
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+
+        var allTickets = await _ticketApiService.GetByTenantAsync(TenantId, token);
+
+        var assignedTickets = currentUser != null
+            ? allTickets.Where(t => t.AssignedToId == currentUser.Id).ToList()
+            : new List<HelpDesk.Shared.DTOs.TicketDto>();
+
+        var model = new TicketListViewModel
+        {
+            PageTitle = "Assigned to Me",
+            PageSubtitle = "Tickets assigned to you",
+            Tickets = assignedTickets
+        };
+
+        return View("TicketList", model);
     }
 
     [HttpPost]
-public async Task<IActionResult> AssignToMe(Guid id)
-{
-    var token = await GetAccessTokenAsync();
-    var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-
-    if (currentUser != null)
-    {
-        var dto = new AssignTicketDto { TechnicianId = currentUser.Id, AssignedById = currentUser.Id };
-        var result = await _ticketApiService.AssignAsync(id, dto, token);
-        if (!result.Success)
-            TempData["ErrorMessage"] = result.ErrorMessage ?? "Failed to assign ticket.";
-        else
-            TempData["SuccessMessage"] = "Ticket assigned to you.";
-    }
-
-    var referer = Request.Headers["Referer"].ToString();
-    return Redirect(!string.IsNullOrEmpty(referer) ? referer : Url.Action("Index", "Dashboard")!);
-}
-
-[HttpPost]
 public async Task<IActionResult> AssignToTechnician(Guid id, Guid technicianId)
 {
     var token = await GetAccessTokenAsync();

@@ -4,6 +4,20 @@
 }
 
 <div class="page-header">
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background:var(--red-bg); border:1px solid #FECACA; color:var(--red); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;">
+            <i class="fa-solid fa-circle-exclamation"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background:var(--green-bg); border:1px solid #BBF7D0; color:var(--green); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;" >
+            <i class="fa-solid fa-circle-check"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+
     <div>
         <h1 class="page-title">Team Lead Dashboard</h1>
         <p class="page-subtitle">Welcome back, @Model.TeamLeadFirstName. Here's your team's status.</p>
@@ -77,7 +91,29 @@
                     <td>@ticket.Category</td>
                     <td>@ticket.SubmittedBy</td>
                     <td>@ticket.TimeOpen</td>
-                    Test John Smith
+                   <td style="white-space:nowrap;">
+    <div style="display:inline-block; position:relative;">
+        <button type="button" class="btn btn-primary" onclick="toggleAssignDropdown('@ticket.Id')">
+            Assign to Technician <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="dropdown-@ticket.Id" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); z-index:100; min-width:220px; overflow:hidden;">
+            <form asp-controller="Tickets" asp-action="AssignToMe" asp-route-id="@ticket.Id" method="post">
+                <button type="submit" style="display:flex; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border); font-weight:600; color:var(--blue);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                    <i class="fa-regular fa-user" style="margin-right:8px;"></i>Assign to Me
+                </button>
+            </form>
+            <form asp-controller="Tickets" asp-action="AssignToTechnician" asp-route-id="@ticket.Id" method="post">
+                @foreach (var tech in Model.Technicians)
+                {
+                    <button type="submit" name="technicianId" value="@tech.Id" style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                        <span>@tech.FirstName @tech.LastName</span>
+                        <span style="color:@(tech.OpenTicketCount >= 8 ? "var(--red)" : "var(--text-gray)"); font-size:13px;">@tech.OpenTicketCount open</span>
+                    </button>
+                }
+            </form>
+        </div>
+    </div>
+</td>
                 </tr>
             }
         </tbody>

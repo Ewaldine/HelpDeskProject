@@ -22,6 +22,75 @@
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* Topbar (moved profile + notifications) */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    z-index: 60;
+    padding: 0 20px;
+}
+
+.topbar-inner {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.topbar .nav-item {
+    background: transparent;
+    color: var(--text-gray);
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.topbar .nav-item:hover {
+    background: var(--bg);
+    color: var(--text-dark);
+}
+
+/* Ensure main content doesn't sit under topbar */
+.main-content {
+    padding-top: 96px;
+}
+
+/* Adjust user profile component when placed in topbar */
+.topbar .sidebar-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    border-top: none;
+    color: var(--text-dark);
+    background: transparent;
+}
+
+.topbar .sidebar-footer .user-name { color: var(--text-dark); }
+.topbar .sidebar-footer .user-role { display: none; }
+
+/* Position profile menu dropdown under the profile in topbar */
+.topbar #profileMenu {
+    display: none;
+    position: absolute !important;
+    top: 100% !important;
+    right: 0 !important;
+    left: auto !important;
+    margin-top: 8px !important;
+}
+
 .notif-tab { background:none; border:none; padding:0 0 12px 0; font-size:14px; color:var(--text-gray); cursor:pointer; border-bottom:2px solid transparent; font-family:inherit; }
 .notif-tab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
 .notif-tab-badge { background:var(--blue); color:white; font-size:11px; padding:1px 7px; border-radius:10px; margin-left:4px; }

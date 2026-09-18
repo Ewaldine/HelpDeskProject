@@ -65,7 +65,7 @@
 
     @if (unread.Any())
     {
-        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">New</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Unread</div>
         <div class="card" style="padding:0; margin-bottom:24px;">
             @foreach (var n in unread)
             {
@@ -101,7 +101,7 @@
 
     @if (read.Any())
     {
-        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Earlier</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Read</div>
         <div class="card" style="padding:0;">
             @foreach (var n in read)
             {
