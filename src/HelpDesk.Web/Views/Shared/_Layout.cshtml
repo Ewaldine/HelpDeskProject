@@ -16,21 +16,22 @@
             <aside class="sidebar">
                 <div class="sidebar-header">
                     <div class="logo-icon"><i class="fa-solid fa-circle-question"></i></div>
-                    <div>
+                    <div class="logo-text" style="flex:1;">
                         <div class="logo-title">HelpDesk</div>
                         <div class="logo-subtitle">IT Support Portal</div>
                     </div>
+                    <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-angles-left" id="toggleIcon"></i></button>
                 </div>
 
                 <nav class="sidebar-nav">
                     <a asp-controller="Dashboard" asp-action="Index" class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Dashboard" ? "active" : "")">
-                        <i class="fa-solid fa-table-cells"></i> Dashboard
+                        <i class="fa-solid fa-table-cells"></i> <span class="nav-label">Dashboard </span>
                     </a>
 
                     @if (User.IsInRole("TeamLead"))
                     {
                         <a asp-controller="Tickets" asp-action="UnassignedQueue" class="nav-item">
-                            <i class="fa-solid fa-inbox"></i> Unassigned Queue
+                            <i class="fa-solid fa-inbox"></i> <span class="nav-label">Unassigned Queue</span>
                         </a>
                     }
 
@@ -38,49 +39,50 @@
                     {
 
                         <a asp-controller="Tickets" asp-action="AssignedToMe" class="nav-item">
-                            <i class="fa-solid fa-ticket"></i> Assigned to Me
+                            <i class="fa-solid fa-ticket"></i> <span class="nav-label">Assigned to Me</span>
                         </a>
                     }
 
                     <a asp-controller="Tickets" asp-action="MyTickets" class="nav-item">
-                        <i class="fa-solid fa-ticket"></i> My Tickets
+                        <i class="fa-solid fa-ticket"></i> <span class="nav-label">My Tickets</span>
                     </a>
 
                     @if (User.IsInRole("TeamLead") || User.IsInRole("Admin"))
                     {
                         <a asp-controller="Tickets" asp-action="AllTickets" class="nav-item">
-                            <i class="fa-solid fa-bars"></i> All Tickets
+                            <i class="fa-solid fa-bars"></i> <span class="nav-label">All Tickets</span>
                         </a>
                     }
 
                     @if (User.IsInRole("TeamLead"))
                     {
                         <a asp-controller="Team" asp-action="Index" class="nav-item">
-                            <i class="fa-solid fa-users"></i> My Team
+                            <i class="fa-solid fa-users"></i> <span class="nav-label">My Team</span>
                         </a>
                     }
 
                     @if (User.IsInRole("Admin"))
                     {
                         <a asp-controller="Categories" asp-action="Index" class="nav-item">
-                            <i class="fa-regular fa-folder"></i> Categories
+                            <i class="fa-regular fa-folder"></i> <span class="nav-label">Categories</span>
                         </a>
                     }
 
                     @if (User.IsInRole("TeamLead") || User.IsInRole("Admin"))
                     {
                         <a asp-controller="Reports" asp-action="Index" class="nav-item">
-                            <i class="fa-solid fa-chart-column"></i> Reports
+                            <i class="fa-solid fa-chart-column"></i> <span class="nav-label">Reports</span>
                         </a>
                     }
 
                     <a asp-controller="Notifications" asp-action="Index" class="nav-item" style="justify-content:space-between;">
-                        <span><i class="fa-regular fa-bell"></i> Notifications</span>
+                        <span>
+                            <i class="fa-regular fa-bell"></i> <span class="nav-label">Notifications</span>
                         <span id="notifBadge" style="display:none; background:var(--red); color:white; font-size:11px; padding:1px 7px; border-radius:10px;"></span>
                     </a>
                 </nav>
 
-                @await Component.InvokeAsync("UserProfile")
+                    <span class="nav-label">@await Component.InvokeAsync("UserProfile")</span>
             </aside>
 
             <main class="main-content">
@@ -182,5 +184,21 @@
         });
 </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+            function toggleSidebar() {
+                const sidebar = document.querySelector('.sidebar');
+                sidebar.classList.toggle('collapsed');
+                const collapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', collapsed);
+                document.getElementById('toggleIcon').className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
+            }
+            document.addEventListener('DOMContentLoaded', function() {
+                if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                    document.querySelector('.sidebar').classList.add('collapsed');
+                    document.getElementById('toggleIcon').className = 'fa-solid fa-angles-right';
+                }
+            });
+    </script>
 </body>
 </html>

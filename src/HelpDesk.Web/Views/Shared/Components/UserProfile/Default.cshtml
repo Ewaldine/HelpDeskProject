@@ -11,7 +11,7 @@
             {
                 <div class="user-avatar">@(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())</div>
             }
-            <div>
+            <div class="user-text">
                 <div class="user-name">@Model.FirstName @Model.LastName</div>
                 <div class="user-role">@Model.Role</div>
             </div>
