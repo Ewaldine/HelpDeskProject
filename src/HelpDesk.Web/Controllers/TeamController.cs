@@ -26,7 +26,7 @@ public class TeamController : BaseController
         {
             var techTickets = allTickets.Where(t => t.AssignedToId == tech.Id).ToList();
             var resolvedThisWeek = techTickets.Count(t =>
-                t.Status == "Resolved" && t.CreatedAt >= DateTime.UtcNow.AddDays(-7));
+                t.Status == "Resolved" && t.ResolvedAt.HasValue && t.ResolvedAt.Value >= DateTime.UtcNow.AddDays(-7));
             var openTickets = techTickets.Count(t => t.Status != "Resolved" && t.Status != "Closed");
 
             return new TeamMemberDetailViewModel

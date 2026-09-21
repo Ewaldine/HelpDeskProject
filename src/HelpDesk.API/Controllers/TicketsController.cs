@@ -253,6 +253,7 @@ public TicketsController(
         AssignedToId = t.AssignedToId,
         SubmittedByName = t.SubmittedBy != null ? $"{t.SubmittedBy.FirstName} {t.SubmittedBy.LastName}" : null,
         AssignedToName = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : null,
-        CategoryName = t.Category?.Name
+        CategoryName = t.Category?.Name,
+        ResolvedAt = t.ResolvedAt
     };
 }

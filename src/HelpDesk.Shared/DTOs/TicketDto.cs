@@ -15,4 +15,5 @@ public class TicketDto
     public string? SubmittedByName { get; set; }
     public string? AssignedToName { get; set; }
     public string? CategoryName { get; set; }
+    public DateTime? ResolvedAt { get; set; }
 }
