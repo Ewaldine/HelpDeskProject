@@ -119,7 +119,7 @@
                             }
                         </div>
                     </div>
-                    <div style="display:flex; gap:6px; flex-shrink:0;">
+                    <div class="notif-actions" style="display:flex; gap:6px; flex-shrink:0;">
                         @if (!n.IsRead)
                         {
                             <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" style="display:inline;">
