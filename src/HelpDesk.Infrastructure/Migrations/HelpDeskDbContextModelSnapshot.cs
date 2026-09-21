@@ -239,6 +239,9 @@ namespace HelpDesk.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<bool>("UnassignedWarningSent")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
