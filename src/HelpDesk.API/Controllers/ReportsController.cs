@@ -212,4 +212,34 @@ public class ReportsController : ControllerBase
             RecentActivity = recentHistory
         });
     }
+
+    [HttpGet("export/{tenantId}")]
+    public async Task<IActionResult> Export(Guid tenantId)
+    {
+        var tickets = await _context.Tickets
+            .Include(t => t.SubmittedBy)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.Category)
+            .Where(t => t.TenantId == tenantId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Ticket,Title,Status,Priority,Category,SubmittedBy,AssignedTo,CreatedAt,ResolvedAt,SlaBreached");
+
+        string Csv(string? s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
+
+        foreach (var t in tickets)
+        {
+            var ticketRef = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper();
+            sb.AppendLine(string.Join(",",
+                Csv(ticketRef), Csv(t.Title), Csv(t.Status.ToString()), Csv(t.Priority.ToString()),
+                Csv(t.Category?.Name),
+                Csv(t.SubmittedBy != null ? $"{t.SubmittedBy.FirstName} {t.SubmittedBy.LastName}" : ""),
+                Csv(t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"),
+                Csv(t.CreatedAt.ToString("u")), Csv(t.ResolvedAt?.ToString("u") ?? ""), Csv(t.IsSlaBreach.ToString())));
+        }
+
+        return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"helpdesk-report-{DateTime.UtcNow:yyyyMMdd}.csv");
+    }
 }

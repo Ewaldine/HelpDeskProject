@@ -24,21 +24,25 @@ public class TicketsController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-
         var allTickets = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
-        var myTickets = currentUser != null
-            ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList()
-            : new List<HelpDesk.Shared.DTOs.TicketDto>();
+        List<HelpDesk.Shared.DTOs.TicketDto> myTickets;
+        string subtitle;
 
-        var model = new TicketListViewModel
+        if (User.IsInRole("Technician") || User.IsInRole("TeamLead"))
         {
-            PageTitle = "My Tickets",
-            PageSubtitle = "Tickets you've submitted",
-            Tickets = myTickets
-        };
+            myTickets = currentUser != null
+                ? allTickets.Where(t => t.SubmittedById == currentUser.Id || t.AssignedToId == currentUser.Id).ToList()
+                : new();
+            subtitle = "Tickets you've submitted or that are assigned to you";
+        }
+        else
+        {
+            myTickets = currentUser != null ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList() : new();
+            subtitle = "Tickets you've submitted";
+        }
 
-        return View("TicketList", model);
+        return View("TicketList", new TicketListViewModel { PageTitle = "My Tickets", PageSubtitle = subtitle, Tickets = myTickets });
     }
 
     public async Task<IActionResult> AssignedToMe()

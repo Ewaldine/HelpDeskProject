@@ -91,29 +91,40 @@
                     <td>@ticket.Category</td>
                     <td>@ticket.SubmittedBy</td>
                     <td>@ticket.TimeOpen</td>
-                   <td style="white-space:nowrap;">
-    <div style="display:inline-block; position:relative;">
-        <button type="button" class="btn btn-primary" onclick="toggleAssignDropdown('@ticket.Id')">
-            Assign to Technician <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
-        </button>
-        <div id="dropdown-@ticket.Id" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); z-index:100; min-width:220px; overflow:hidden;">
-            <form asp-controller="Tickets" asp-action="AssignToMe" asp-route-id="@ticket.Id" method="post">
-                <button type="submit" style="display:flex; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border); font-weight:600; color:var(--blue);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
-                    <i class="fa-regular fa-user" style="margin-right:8px;"></i>Assign to Me
-                </button>
-            </form>
-            <form asp-controller="Tickets" asp-action="AssignToTechnician" asp-route-id="@ticket.Id" method="post">
-                @foreach (var tech in Model.Technicians)
-                {
-                    <button type="submit" name="technicianId" value="@tech.Id" style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
-                        <span>@tech.FirstName @tech.LastName</span>
-                        <span style="color:@(tech.OpenTicketCount >= 8 ? "var(--red)" : "var(--text-gray)"); font-size:13px;">@tech.OpenTicketCount open</span>
-                    </button>
-                }
-            </form>
-        </div>
-    </div>
-</td>
+                    <td style="white-space:nowrap; padding-right:24px;">
+                        <div style="display:inline-block; position:relative;">
+                            <button type="button" class="btn btn-primary" onclick="toggleAssignDropdown('@ticket.Id')">
+                                Assign to Technician <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+                            </button>
+                            <div id="dropdown-@ticket.Id" style="display:none; position:absolute; right:0; top:100%; margin-top:4px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.12); z-index:100; min-width:220px; overflow:hidden;">
+                                <form asp-action="AssignToMe" asp-route-id="@ticket.Id" method="post">
+                                    <button type="submit"
+                                            style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border); font-weight:600; color:var(--blue);"
+                                            onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                        <span><i class="fa-regular fa-user" style="margin-right:8px;"></i>Assign to Me</span>
+                                    </button>
+                                </form>
+                                <form asp-action="AssignToTechnician" asp-route-id="@ticket.Id" method="post">
+                                    @foreach (var tech in Model.Technicians)
+                                    {
+                                        <button type="submit" name="technicianId" value="@tech.Id"
+                                                style="display:flex; justify-content:space-between; align-items:center; width:100%; text-align:left; padding:12px 14px; border:none; background:none; cursor:pointer; font-size:14px; font-family:inherit; border-bottom:1px solid var(--border);"
+                                                onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
+                                            <span style="display:flex; align-items:center; gap:8px;">
+                                                <span class="user-avatar" style="width:26px; height:26px; font-size:10px;">
+                                                    @(string.Concat(tech.FirstName.FirstOrDefault(), tech.LastName.FirstOrDefault()).ToString().ToUpper())
+                                                </span>
+                                                @tech.FirstName @tech.LastName
+                                            </span>
+                                            <span style="color:@(tech.OpenTicketCount >= 8 ? "var(--red)" : "var(--text-gray)"); font-size:13px;">
+                                                @tech.OpenTicketCount open
+                                            </span>
+                                        </button>
+                                    }
+                                </form>
+                            </div>
+                        </div>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -198,5 +209,13 @@
         if (!e.target.closest('[id^="dropdown-"]') && !e.target.closest('button[onclick^="toggleAssignDropdown"]')) {
             document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.style.display = 'none');
         }
+    });
+
+    document.getElementById('ticketSearch').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.ticket-row').forEach(row => {
+            const title = row.getAttribute('data-title');
+            row.style.display = title.includes(query) ? '' : 'none';
+        });
     });
 </script>

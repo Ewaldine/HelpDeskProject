@@ -35,14 +35,6 @@
                         </a>
                     }
 
-                    @if (User.IsInRole("Technician"))
-                    {
-
-                        <a asp-controller="Tickets" asp-action="AssignedToMe" class="nav-item">
-                            <i class="fa-solid fa-ticket"></i> <span class="nav-label">Assigned to Me</span>
-                        </a>
-                    }
-
                     <a asp-controller="Tickets" asp-action="MyTickets" class="nav-item">
                         <i class="fa-solid fa-ticket"></i> <span class="nav-label">My Tickets</span>
                     </a>

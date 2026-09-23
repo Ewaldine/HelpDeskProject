@@ -57,4 +57,5 @@ public interface ITicketApiService
     Task UpdateProfileWithPhotoAsync(Guid userId, UpdateProfileDto dto, string accessToken);
 
     Task DeleteNotificationAsync(Guid userId, Guid notificationId, string accessToken);
+    Task<byte[]> ExportReportAsync(Guid tenantId, string accessToken);
 }

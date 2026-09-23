@@ -47,6 +47,19 @@
     </div>
 
     <div class="filter-dropdown-wrap">
+        <button type="button" class="filter-btn" onclick="toggleFilterDropdown('submitterFilter')">
+            <i class="fa-solid fa-filter"></i> <span id="submitterLabel">All Submitters</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="submitterFilter" class="filter-dropdown">
+            <div class="filter-option selected" onclick="selectFilter('submitter', '', 'All Submitters', this)">All Submitters</div>
+            @foreach (var name in Model.Tickets.Select(t => t.SubmittedByName).Where(n => n != null).Distinct())
+            {
+                <div class="filter-option" onclick="selectFilter('submitter', '@name!.ToLower()', '@name', this)">@name</div>
+            }
+        </div>
+    </div>
+
+    <div class="filter-dropdown-wrap">
         <button type="button" class="filter-btn" onclick="toggleFilterDropdown('categoryFilter')">
             <i class="fa-solid fa-filter"></i> <span id="categoryLabel">All Categories</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
         </button>
@@ -65,7 +78,7 @@
 <div class="card make-div-auto tickets-card">
     <table class="tickets-table">
         <thead>
-            <tr>
+            <tr >
                 <th>Ticket ID</th>
                 <th>Title</th>
                 <th>Status</th>
@@ -110,7 +123,7 @@
     });
 </script>
 <script>
-    let activeFilters = { status: '', priority: '', category: '' };
+    let activeFilters = { status: '', priority: '', category: '', submitter: '' };
 
     function toggleFilterDropdown(id) {
         document.querySelectorAll('.filter-dropdown').forEach(d => {
@@ -133,6 +146,7 @@
 
     function applyFilters() {
         const searchQuery = (document.getElementById('ticketSearch').value || '').trim().toLowerCase();
+        const matchesSubmitter = !activeFilters.submitter || row.getAttribute('data-submitter') === activeFilters.submitter;
 
         document.querySelectorAll('tbody tr[data-title]').forEach(row => {
             const title = (row.getAttribute('data-title') || '').toLowerCase();

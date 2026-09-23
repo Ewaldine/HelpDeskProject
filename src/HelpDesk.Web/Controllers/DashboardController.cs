@@ -99,10 +99,9 @@ public class DashboardController : BaseController
                     IconType = "updated"
                 }).ToList() ?? new List<TeamActivityViewModel>()
             };
-            return View("TeamLeadDashboard", teamLeadModel);
             teamLeadModel.Technicians = await _ticketApiService.GetTechniciansAsync(TenantId, token);
-
             return View("TeamLeadDashboard", teamLeadModel);
+
         }
 
         if (User.IsInRole("Technician"))

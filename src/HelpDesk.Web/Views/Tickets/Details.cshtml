@@ -179,7 +179,7 @@
 
         <!-- SLA Status -->
         @{ 
-            var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow.ToLocalTime();
+            var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow;
         }
         <div class="card make-div-auto" style="@(isOverdue ? "background:#FEF2F2; border-color:#FECACA;" : "")">
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
@@ -189,11 +189,11 @@
             @if (isOverdue)
             {
                 <div style="font-size:24px; font-weight:700; color:var(--red);">Overdue</div>
-                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">Due: @Model.Ticket.ResolutionDueAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">Due: @Model.Ticket.ResolutionDueAt.ToLocalTime().ToString("MMM dd, yyyy, hh:mm:ss tt")</div>
             }
             else
             {
-                var timeLeft = Model.Ticket.ResolutionDueAt - DateTime.UtcNow.ToLocalTime();
+                var timeLeft = Model.Ticket.ResolutionDueAt - DateTime.UtcNow;
                 <div style="font-size:18px; font-weight:700; color:var(--green);">On Track</div>
                 <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">
                     @timeLeft.Hours hrs @timeLeft.Minutes min remaining

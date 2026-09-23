@@ -230,4 +230,11 @@ public class TicketApiService : ITicketApiService
         var client = CreateClient(accessToken);
         await client.DeleteAsync($"api/Notifications/{userId}/{notificationId}");
     }
+
+    public async Task<byte[]> ExportReportAsync(Guid tenantId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.GetAsync($"api/Reports/export/{tenantId}");
+        return await response.Content.ReadAsByteArrayAsync();
+    }
 }
