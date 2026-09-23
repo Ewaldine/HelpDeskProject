@@ -185,7 +185,7 @@
 </script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <script>
+   <script>
             function toggleSidebar() {
                 const sidebar = document.querySelector('.sidebar');
                 sidebar.classList.toggle('collapsed');
@@ -193,12 +193,13 @@
                 localStorage.setItem('sidebarCollapsed', collapsed);
                 document.getElementById('toggleIcon').className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
             }
-            document.addEventListener('DOMContentLoaded', function() {
-                if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                    document.querySelector('.sidebar').classList.add('collapsed');
-                    document.getElementById('toggleIcon').className = 'fa-solid fa-angles-right';
-                }
-            });
+                /*document.addEventListener('DOMContentLoaded', function() {
+                    if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                        document.querySelector('.sidebar').classList.add('collapsed');
+                        document.getElementById('toggleIcon').className = 'fa-solid fa-angles-right';
+                    }
+                });*/
+
     </script>
 </body>
 </html>
