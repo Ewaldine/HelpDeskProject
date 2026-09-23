@@ -211,24 +211,7 @@ public TicketsController(
         return NoContent();
     }
 
-    [HttpPut("{id}/rate")]
-    [Authorize(Roles = "Employee,Admin")]
-    public async Task<ActionResult<TicketDto>> Rate(Guid id, [FromBody] int rating)
-    {
-        try
-        {
-            var ticket = await _ticketService.RateTicketAsync(id, rating);
-            return Ok(MapToDto(ticket));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (ArgumentOutOfRangeException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+
 
     [HttpPut("{id}/escalate")]
     [Authorize(Roles = "Technician,TeamLead,Admin")]

@@ -65,18 +65,12 @@ public class ReportsController : ControllerBase
             ? Math.Round(resolvedWithTimes.Average(t => (t.ResolvedAt!.Value - t.CreatedAt).TotalHours), 1)
             : 0;
 
-        var ratings = allTenantTickets.Where(t => t.SatisfactionRating.HasValue).ToList();
-        var avgSatisfaction = ratings.Any()
-            ? Math.Round(ratings.Average(t => t.SatisfactionRating!.Value), 1)
-            : 0;
-
         return Ok(new ReportsResultDto
         {
             WeeklyActivity = weeklyActivity,
             MonthlyTrend = monthlyTrend,
             ResolutionRate = resolutionRate,
             AvgResponseHours = avgResponseHours,
-            AvgSatisfaction = avgSatisfaction
         });
     }
     [HttpGet("admin-dashboard/{tenantId}")]
