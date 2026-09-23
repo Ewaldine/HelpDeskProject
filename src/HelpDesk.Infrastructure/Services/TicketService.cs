@@ -35,6 +35,26 @@ public class TicketService : ITicketService
 
         await AddHistoryAsync(ticket.Id, "Created", null, "Open", ticket.SubmittedById);
 
+        var ticketRef = $"TKT-{ticket.Id.ToString().Substring(0, 8).ToUpper()}";
+        var leads = await _context.Users
+            .Where(u => u.TenantId == tenantId && (u.Role == UserRole.TeamLead || u.Role == UserRole.Admin) && u.IsActive)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        foreach (var leadId in leads)
+        {
+            await _context.Notifications.AddAsync(new Notification
+            {
+                UserId = leadId,
+                TicketId = ticket.Id,
+                Type = NotificationType.Ticket,
+                IconType = "assignment",
+                Title = "New ticket created",
+                Message = $"{ticketRef} \"{ticket.Title}\" ({ticket.Priority}) was submitted and needs assignment."
+            });
+        }
+        await _context.SaveChangesAsync();
+
         return ticket;
     }
 
