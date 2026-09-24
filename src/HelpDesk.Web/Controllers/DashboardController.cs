@@ -106,11 +106,12 @@ public class DashboardController : BaseController
 
         if (User.IsInRole("Technician"))
         {
-            var currentUser = await GetCurrentUserAsync(token);
+            var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
             var allTicketsForTech = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
             var myAssigned = currentUser != null
-                ? allTicketsForTech.Where(t => t.AssignedToName == $"{currentUser.FirstName} {currentUser.LastName}").ToList()
+                ? allTicketsForTech.Where(t => t.AssignedToId == currentUser.Id
+                    && t.Status != "Resolved" && t.Status != "Closed").ToList()
                 : new List<HelpDesk.Shared.DTOs.TicketDto>();
 
             var techModel = new TechnicianDashboardViewModel
@@ -119,11 +120,11 @@ public class DashboardController : BaseController
                 ResolvedToday = myAssigned.Count(t => t.Status == "Resolved"),
                 AvgResponseTime = "23 min",
                 TicketQueue = myAssigned
-                    .OrderByDescending(t => t.Priority)
+                    .OrderByDescending(t => t.Priority switch { "Critical" => 4, "High" => 3, "Medium" => 2, "Low" => 1, _ => 0 })
                     .Select(t => new TechnicianTicketRowViewModel
                     {
                         Id = t.Id,
-                        TicketNumber = "#" + t.Id.ToString().Substring(0, 8),
+                        TicketNumber = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper(),
                         Title = t.Title,
                         Priority = t.Priority,
                         Status = t.Status,
@@ -154,7 +155,8 @@ public class DashboardController : BaseController
 
         var resolvedThisMonth = myTickets.Count(t =>
             t.Status == "Resolved" &&
-            t.CreatedAt.Month == DateTime.UtcNow.Month &&
+            t.ResolvedAt.HasValue &&
+            t.CreatedAt.Month == DateTime.UtcNow.Month &&   
             t.CreatedAt.Year == DateTime.UtcNow.Year);
 
         var model = new EmployeeDashboardViewModel
@@ -168,7 +170,7 @@ public class DashboardController : BaseController
                 .Select(t => new TicketRowViewModel
                 {
                     Id = t.Id,
-                    TicketNumber = "#" + t.Id.ToString().Substring(0, 8),
+                    TicketNumber = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper(),
                     Title = t.Title,
                     Status = t.Status,
                     Priority = t.Priority,

@@ -42,7 +42,7 @@ public class TicketsController : BaseController
             subtitle = "Tickets you've submitted";
         }
 
-        return View("TicketList", new TicketListViewModel { PageTitle = "My Tickets", PageSubtitle = subtitle, Tickets = myTickets });
+        return View("TicketList", new TicketListViewModel { PageTitle = "My Tickets", PageSubtitle = subtitle, Tickets = myTickets, ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead") });
     }
 
     public async Task<IActionResult> AssignedToMe()
@@ -102,7 +102,8 @@ public async Task<IActionResult> AssignToTechnician(Guid id, Guid technicianId)
             PageTitle = "Unassigned Queue",
             PageSubtitle = "Tickets awaiting technician assignment",
             Tickets = unassigned,
-            Technicians = technicians
+            Technicians = technicians,
+            ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead"),
         };
 
         return View("UnassignedQueue", model);
@@ -116,7 +117,8 @@ public async Task<IActionResult> AssignToTechnician(Guid id, Guid technicianId)
         {
             PageTitle = "All Tickets",
             PageSubtitle = "Every ticket in the organization",
-            Tickets = tickets
+            Tickets = tickets,
+            ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead"),
         };
 
         return View("TicketList", model);

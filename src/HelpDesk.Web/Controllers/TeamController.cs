@@ -20,9 +20,16 @@ public class TeamController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var technicians = await _ticketApiService.GetTechniciansAsync(TenantId, token);
+        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+
+        var teamMembers = technicians.ToList();
+        if (currentUser != null && !teamMembers.Any(t => t.Id == currentUser.Id))
+        {
+            teamMembers.Insert(0, currentUser);
+        }
         var allTickets = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
-        var members = technicians.Select(tech =>
+        var members = teamMembers.Select(tech =>
         {
             var techTickets = allTickets.Where(t => t.AssignedToId == tech.Id).ToList();
             var resolvedThisWeek = techTickets.Count(t =>
