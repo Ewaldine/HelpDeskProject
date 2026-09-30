@@ -8,6 +8,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script>
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+    </script>
 </head>
 <body>
     @if (User.Identity != null && User.Identity.IsAuthenticated)
@@ -177,21 +182,16 @@
 </script>
     @await RenderSectionAsync("Scripts", required: false)
 
-   <script>
-            function toggleSidebar() {
-                const sidebar = document.querySelector('.sidebar');
-                sidebar.classList.toggle('collapsed');
-                const collapsed = sidebar.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', collapsed);
-                document.getElementById('toggleIcon').className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
-            }
-                /*document.addEventListener('DOMContentLoaded', function() {
-                    if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                        document.querySelector('.sidebar').classList.add('collapsed');
-                        document.getElementById('toggleIcon').className = 'fa-solid fa-angles-right';
-                    }
-                });*/
-
-    </script>
+        <script>
+                function toggleSidebar() {
+                    const collapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+                    localStorage.setItem('sidebarCollapsed', collapsed);
+                    document.getElementById('toggleIcon').className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
+                }
+                document.addEventListener('DOMContentLoaded', function() {
+                    const collapsed = document.documentElement.classList.contains('sidebar-collapsed');
+                    document.getElementById('toggleIcon').className = collapsed ? 'fa-solid fa-angles-right' : 'fa-solid fa-angles-left';
+                });
+        </script>
 </body>
 </html>

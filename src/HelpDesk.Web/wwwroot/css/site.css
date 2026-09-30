@@ -22,15 +22,89 @@
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-.sidebar { transition: width 0.2s ease; overflow-x: hidden; }
-.sidebar.collapsed { width: 76px; }
-.sidebar.collapsed ~ .main-content { margin-left: 76px; }
-.sidebar.collapsed .nav-label, .sidebar.collapsed .logo-text, .sidebar.collapsed .user-text { display: none; }
-.sidebar.collapsed .nav-item { justify-content: center; }
-.sidebar.collapsed .sidebar-header { justify-content: center; }
-.sidebar-toggle { background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 16px; padding: 4px; }
-.notif-row .notif-actions { opacity: 0; transition: opacity 0.15s; }
-.notif-row:hover .notif-actions { opacity: 1; }
+/*Sidebar*/
+
+.sidebar {
+    transition: width 0.2s ease;
+    overflow-x: hidden;
+}
+
+html.sidebar-collapsed .sidebar {
+    width: 76px;
+}
+
+html.sidebar-collapsed .main-content {
+    margin-left: 76px;
+}
+
+html.sidebar-collapsed .sidebar .nav-label,
+html.sidebar-collapsed .sidebar .logo-text,
+html.sidebar-collapsed .sidebar .user-text {
+    display: none;
+}
+
+html.sidebar-collapsed .sidebar .nav-item {
+    justify-content: center;
+}
+
+html.sidebar-collapsed .sidebar .sidebar-header {
+    justify-content: center;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: #94A3B8;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+}
+
+html.sidebar-collapsed .sidebar-footer {
+    justify-content: center !important;
+}
+
+    html.sidebar-collapsed .sidebar-footer > div:first-child {
+        flex: none !important;
+    }
+
+    html.sidebar-collapsed .sidebar-footer > a {
+        display: none;
+    }
+
+html.sidebar-collapsed .sidebar-toggle {
+    position: fixed;
+    left: 76px;
+    top: 24px;
+    transform: translateX(-50%);
+    background: var(--navy);
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 300;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+html.sidebar-collapsed #profileMenu {
+    left: 100% !important;
+    bottom: auto !important;
+    top: 8px !important;
+    margin-left: 10px !important;
+    margin-bottom: 0 !important;
+}
+
+.notif-row .notif-actions {
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.notif-row:hover .notif-actions {
+    opacity: 1;
+}
 
 /* Topbar (moved profile + notifications) */
 .topbar {
