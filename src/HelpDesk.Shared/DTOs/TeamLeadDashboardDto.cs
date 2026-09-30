@@ -33,4 +33,6 @@ public class TeamActivityDto
 {
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string? NewValue { get; set; }
 }
