@@ -46,7 +46,7 @@ public class DashboardController : BaseController
                     Initials = string.Concat(t.Name.Split(' ').Take(2).Select(n => n.FirstOrDefault())).ToUpper(),
                     AssignedTickets = t.AssignedTickets,
                     ResolvedThisMonth = t.ResolvedThisMonth,
-                    AvgResolutionHours = 3.5 // placeholder — calculated separately if needed
+                    AvgResolutionHours = t.AvgResolutionHours,
                 }).ToList() ?? new List<TechnicianWorkloadViewModel>()
             };
             return View("AdminDashboard", adminModel);
@@ -96,7 +96,7 @@ public class DashboardController : BaseController
                 {
                     Message = a.Message,
                     TimeAgo = GetTimeAgo(a.CreatedAt),
-                    IconType = "updated"
+                    IconType = MapActivityIcon(a.Action, a.NewValue)
                 }).ToList() ?? new List<TeamActivityViewModel>()
             };
             teamLeadModel.Technicians = await _ticketApiService.GetTechniciansAsync(TenantId, token);
@@ -196,5 +196,16 @@ public class DashboardController : BaseController
         if (span.TotalHours < 24) return $"{(int)span.TotalHours} hr{((int)span.TotalHours == 1 ? "" : "s")} ago";
         return $"{(int)span.TotalDays} day{((int)span.TotalDays == 1 ? "" : "s")} ago";
     }
+
+    private static string MapActivityIcon(string action, string? newValue) => action switch
+    {
+        "Created" => "assigned",
+        "Assigned" => "assigned",
+        "Escalated" => "escalated",
+        "AutoEscalated" => "escalated",
+        "StatusChanged" when newValue == "Resolved" => "resolved",
+        "StatusChanged" => "updated",
+        _ => "updated"
+    };
 }
 
