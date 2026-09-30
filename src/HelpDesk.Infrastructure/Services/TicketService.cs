@@ -65,7 +65,6 @@ public class TicketService : ITicketService
 
         var oldAssignee = ticket.AssignedToId;
         ticket.AssignedToId = technicianId;
-        ticket.Status = TicketStatus.Assigned;
 
         await _context.SaveChangesAsync();
 
