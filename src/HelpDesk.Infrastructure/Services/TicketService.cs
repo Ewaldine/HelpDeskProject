@@ -35,6 +35,26 @@ public class TicketService : ITicketService
 
         await AddHistoryAsync(ticket.Id, "Created", null, "Open", ticket.SubmittedById);
 
+        var ticketRef = $"TKT-{ticket.Id.ToString().Substring(0, 8).ToUpper()}";
+        var leads = await _context.Users
+            .Where(u => u.TenantId == tenantId && (u.Role == UserRole.TeamLead || u.Role == UserRole.Admin) && u.IsActive)
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        foreach (var leadId in leads)
+        {
+            await _context.Notifications.AddAsync(new Notification
+            {
+                UserId = leadId,
+                TicketId = ticket.Id,
+                Type = NotificationType.Ticket,
+                IconType = "assignment",
+                Title = "New ticket created",
+                Message = $"{ticketRef} \"{ticket.Title}\" ({ticket.Priority}) was submitted and needs assignment."
+            });
+        }
+        await _context.SaveChangesAsync();
+
         return ticket;
     }
 
@@ -45,7 +65,6 @@ public class TicketService : ITicketService
 
         var oldAssignee = ticket.AssignedToId;
         ticket.AssignedToId = technicianId;
-        ticket.Status = TicketStatus.Assigned;
 
         await _context.SaveChangesAsync();
 
@@ -304,20 +323,6 @@ public class TicketService : ITicketService
             });
         }
         await _context.SaveChangesAsync();
-    }
-
-    public async Task<Ticket> RateTicketAsync(Guid ticketId, int rating)
-    {
-        if (rating < 1 || rating > 5)
-            throw new ArgumentOutOfRangeException(nameof(rating), "Rating must be between 1 and 5");
-
-        var ticket = await _ticketRepository.GetByIdAsync(ticketId)
-            ?? throw new InvalidOperationException("Ticket not found");
-
-        ticket.SatisfactionRating = rating;
-        await _context.SaveChangesAsync();
-
-        return ticket;
     }
 
     private async Task AddHistoryAsync(Guid ticketId, string action, string? oldValue, string? newValue, Guid changedById)

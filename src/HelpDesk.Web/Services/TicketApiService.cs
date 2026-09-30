@@ -64,11 +64,13 @@ public class TicketApiService : ITicketApiService
         var result = await client.GetFromJsonAsync<List<UserDto>>($"api/Users/technicians/{tenantId}");
         return result ?? new List<UserDto>();
     }
-    public async Task<bool> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken)
+    public async Task<(bool Success, string? ErrorMessage)> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken)
     {
         var client = CreateClient(accessToken);
         var response = await client.PutAsJsonAsync($"api/Tickets/{ticketId}/assign", dto);
-        return response.IsSuccessStatusCode;
+        if (response.IsSuccessStatusCode) return (true, null);
+        var error = await response.Content.ReadAsStringAsync();
+        return (false, error);
     }
 
     public async Task<(bool Success, string? ErrorMessage)> UpdateStatusAsync(Guid ticketId, UpdateStatusDto dto, string accessToken)
@@ -221,5 +223,18 @@ public class TicketApiService : ITicketApiService
     {
         var client = CreateClient(accessToken);
         await client.PutAsJsonAsync($"api/Users/{userId}/profile", dto);
+    }
+
+    public async Task DeleteNotificationAsync(Guid userId, Guid notificationId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        await client.DeleteAsync($"api/Notifications/{userId}/{notificationId}");
+    }
+
+    public async Task<byte[]> ExportReportAsync(Guid tenantId, string accessToken)
+    {
+        var client = CreateClient(accessToken);
+        var response = await client.GetAsync($"api/Reports/export/{tenantId}");
+        return await response.Content.ReadAsByteArrayAsync();
     }
 }

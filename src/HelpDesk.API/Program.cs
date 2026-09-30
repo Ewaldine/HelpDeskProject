@@ -5,12 +5,22 @@ using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Resources;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<HelpDeskDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Hangfire
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHangfireServer();
 
 // Repositories
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
@@ -118,21 +128,23 @@ builder.Services.AddOpenTelemetry()
 
 var app = builder.Build();
 
-// using (var scope = app.Services.CreateScope())
-// {
-//     var dbContext = scope.ServiceProvider.GetRequiredService<HelpDeskDbContext>();
-//     await dbContext.Database.MigrateAsync();
-// }
+app.UseHangfireDashboard("/hangfire");
+
+RecurringJob.AddOrUpdate<HelpDesk.Infrastructure.Services.SlaService>(
+    "sla-check-job",
+    service => service.CheckAndUpdateSlaStatusAsync(Guid.Parse("E9DC1A56-E4FE-448F-93B8-8234B1379D2A")),
+    "*/2 * * * *"); // every 2 minutes
+
+RecurringJob.AddOrUpdate<HelpDesk.Infrastructure.Services.SlaService>(
+    "sla-escalation-job",
+    service => service.EscalateBreachedTicketsAsync(Guid.Parse("E9DC1A56-E4FE-448F-93B8-8234B1379D2A")),
+    "*/5 * * * *"); // every 5 minutes
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();

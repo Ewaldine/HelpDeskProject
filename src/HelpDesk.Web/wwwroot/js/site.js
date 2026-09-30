@@ -97,3 +97,37 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+let activeFilters = { status: '', priority: '', category: '', submitter: '', date: '' };
+
+function applyFilters() {
+    const searchQuery = (document.getElementById('ticketSearch').value || '').trim().toLowerCase();
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+
+    const rows = Array.from(document.querySelectorAll('tbody tr[data-title]'));
+    rows.forEach(row => {
+        const title = (row.getAttribute('data-title') || '').toLowerCase();
+        const status = (row.getAttribute('data-status') || '').toLowerCase();
+        const priority = (row.getAttribute('data-priority') || '').toLowerCase();
+        const category = (row.getAttribute('data-category') || '').toLowerCase();
+        const submitter = (row.getAttribute('data-submitter') || '').toLowerCase();
+        const createdStr = row.getAttribute('data-created');
+
+        let matchesDate = true;
+        if (activeFilters.date && createdStr) {
+            const created = new Date(createdStr); created.setHours(0, 0, 0, 0);
+            if (activeFilters.date === 'today') matchesDate = created.getTime() === today.getTime();
+            else matchesDate = (today - created) / 86400000 <= parseInt(activeFilters.date);
+        }
+
+        const matchesSearch = !searchQuery || title.includes(searchQuery);
+        const matchesStatus = !activeFilters.status || status === activeFilters.status;
+        const matchesPriority = !activeFilters.priority || priority === activeFilters.priority;
+        const matchesCategory = !activeFilters.category || category === activeFilters.category;
+        const matchesSubmitter = !activeFilters.submitter || submitter === activeFilters.submitter;
+
+        row.dataset.visible = (matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesSubmitter && matchesDate) ? '1' : '0';
+    });
+
+    applyPagination();
+}

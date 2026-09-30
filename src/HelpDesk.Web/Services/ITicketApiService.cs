@@ -8,7 +8,7 @@ public interface ITicketApiService
     Task<TicketDto?> GetByIdAsync(Guid id, string accessToken);
     Task<TicketDetailDto?> GetDetailAsync(Guid id, string accessToken);
     Task<TicketDto?> CreateAsync(Guid tenantId, CreateTicketDto dto, string accessToken);
-    Task<bool> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken);
+    Task<(bool Success, string? ErrorMessage)> AssignAsync(Guid ticketId, AssignTicketDto dto, string accessToken);
     Task<(bool Success, string? ErrorMessage)> UpdateStatusAsync(Guid ticketId, UpdateStatusDto dto, string accessToken);
     Task AddCommentAsync(Guid ticketId, AddCommentDto dto, string accessToken);
     Task<UserDto?> GetCurrentUserAsync(string keycloakId,string accessToken);
@@ -55,4 +55,7 @@ public interface ITicketApiService
     Task MarkNotificationReadAsync(Guid userId, Guid notificationId, string accessToken);
     Task ClearAllNotificationsAsync(Guid userId, string accessToken);
     Task UpdateProfileWithPhotoAsync(Guid userId, UpdateProfileDto dto, string accessToken);
+
+    Task DeleteNotificationAsync(Guid userId, Guid notificationId, string accessToken);
+    Task<byte[]> ExportReportAsync(Guid tenantId, string accessToken);
 }

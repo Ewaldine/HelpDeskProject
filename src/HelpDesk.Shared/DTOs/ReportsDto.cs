@@ -6,7 +6,6 @@ public class ReportsResultDto
     public List<MonthlyTrendDto> MonthlyTrend { get; set; } = new();
     public double ResolutionRate { get; set; }
     public double AvgResponseHours { get; set; }
-    public double AvgSatisfaction { get; set; }
 }
 
 public class DailyActivityDto

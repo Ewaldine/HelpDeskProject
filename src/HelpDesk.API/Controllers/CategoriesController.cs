@@ -9,7 +9,7 @@ namespace HelpDesk.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize]
+[Authorize]
 public class CategoriesController : ControllerBase
 {
     private readonly HelpDeskDbContext _context;

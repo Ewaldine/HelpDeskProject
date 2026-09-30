@@ -10,5 +10,4 @@ public interface ITicketService
     Task<Ticket> UpdateStatusAsync(Guid ticketId, TicketStatus newStatus, Guid changedById);
     Task<Ticket> EscalateTicketAsync(Guid ticketId, Guid escalatedById);
     Task AddCommentAsync(Guid ticketId, TicketComment comment);
-    Task<Ticket> RateTicketAsync(Guid ticketId, int rating);
 }

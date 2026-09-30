@@ -28,4 +28,5 @@ public class TechnicianWorkloadDto
     public string Name { get; set; } = string.Empty;
     public int AssignedTickets { get; set; }
     public int ResolvedThisMonth { get; set; }
+    public double AvgResolutionHours { get; set; }
 }

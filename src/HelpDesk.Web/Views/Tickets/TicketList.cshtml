@@ -13,8 +13,8 @@
     </button>
 </div>
 
-<div class="card make-div-auto" style="padding:16px; margin-bottom:0; display:flex; gap:16px; align-items:center;">
-    <div style="flex:1; position:relative;">
+<div class="card make-div-auto" style="padding:16px; margin-bottom:0; display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+    <div style="flex:1; min-width:200px; position:relative;">
         <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--text-gray); font-size:13px;"></i>
         <input type="text" id="ticketSearch" placeholder="Search tickets..."
                style="width:100%; padding:10px 14px 10px 38px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; box-sizing:border-box;" />
@@ -30,6 +30,7 @@
             <div class="filter-option" onclick="selectFilter('status', 'inprogress', 'In Progress', this)">In Progress</div>
             <div class="filter-option" onclick="selectFilter('status', 'resolved', 'Resolved', this)">Resolved</div>
             <div class="filter-option" onclick="selectFilter('status', 'closed', 'Closed', this)">Closed</div>
+            <div class="filter-option" onclick="selectFilter('status', 'escalated', 'Escalated', this)">Escalated</div>
         </div>
     </div>
 
@@ -43,6 +44,34 @@
             <div class="filter-option" onclick="selectFilter('priority', 'medium', 'Medium', this)">Medium</div>
             <div class="filter-option" onclick="selectFilter('priority', 'high', 'High', this)">High</div>
             <div class="filter-option" onclick="selectFilter('priority', 'critical', 'Critical', this)">Critical</div>
+        </div>
+    </div>
+
+    @if (Model.ShowSubmitterFilter)
+    {
+        <div class="filter-dropdown-wrap">
+            <button type="button" class="filter-btn" onclick="toggleFilterDropdown('submitterFilter')">
+                <i class="fa-solid fa-filter"></i> <span id="submitterLabel">All Submitters</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+            </button>
+            <div id="submitterFilter" class="filter-dropdown">
+                <div class="filter-option selected" onclick="selectFilter('submitter', '', 'All Submitters', this)">All Submitters</div>
+                @foreach (var name in Model.Tickets.Select(t => t.SubmittedByName).Where(n => n != null).Distinct())
+                {
+                    <div class="filter-option" onclick="selectFilter('submitter', '@name!.ToLower()', '@name', this)">@name</div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="filter-dropdown-wrap">
+        <button type="button" class="filter-btn" onclick="toggleFilterDropdown('dateFilter')">
+            <i class="fa-solid fa-calendar"></i> <span id="dateLabel">Any Date</span> <i class="fa-solid fa-chevron-down" style="font-size:10px;"></i>
+        </button>
+        <div id="dateFilter" class="filter-dropdown">
+            <div class="filter-option selected" onclick="selectFilter('date', '', 'Any Date', this)">Any Date</div>
+            <div class="filter-option" onclick="selectFilter('date', 'today', 'Today', this)">Today</div>
+            <div class="filter-option" onclick="selectFilter('date', '7', 'Last 7 days', this)">Last 7 days</div>
+            <div class="filter-option" onclick="selectFilter('date', '30', 'Last 30 days', this)">Last 30 days</div>
         </div>
     </div>
 
@@ -87,7 +116,12 @@
             }
             @foreach (var ticket in Model.Tickets)
             {
-                <tr data-title="@ticket.Title.ToLower()" data-status="@ticket.Status.ToLower().Replace(" ", "")" data-priority="@ticket.Priority.ToLower()" data-category="@(ticket.CategoryName?.ToLower() ?? "")">
+                <tr data-title="@ticket.Title.ToLower()"
+                    data-status="@ticket.Status.ToLower().Replace(" ", "")"
+                    data-priority="@ticket.Priority.ToLower()"
+                    data-category="@(ticket.CategoryName?.ToLower() ?? "")"
+                    data-submitter="@(ticket.SubmittedByName?.ToLower() ?? "")"
+                    data-created="@ticket.CreatedAt.ToString("yyyy-MM-dd")">
                     <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">TKT-@ticket.Id.ToString().Substring(0, 8).ToUpper()</a></td>
                     <td>@ticket.Title</td>
                     <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
@@ -101,16 +135,12 @@
         </tbody>
     </table>
 </div>
+<div id="pagination" style="display:flex; justify-content:center; gap:6px; margin-top:20px;"></div>
+
 <script>
-    document.getElementById('ticketSearch').addEventListener('input', function (e) {
-        const query = e.target.value.toLowerCase();
-        document.querySelectorAll('tbody tr[data-title]').forEach(row => {
-            row.style.display = row.getAttribute('data-title').includes(query) ? '' : 'none';
-        });
-    });
-</script>
-<script>
-    let activeFilters = { status: '', priority: '', category: '' };
+    let activeFilters = { status: '', priority: '', category: '', submitter: '', date: '' };
+    let currentPage = 1;
+    const pageSize = 10;
 
     function toggleFilterDropdown(id) {
         document.querySelectorAll('.filter-dropdown').forEach(d => {
@@ -127,33 +157,98 @@
         el.parentElement.querySelectorAll('.filter-option').forEach(o => o.classList.remove('selected'));
         el.classList.add('selected');
 
+        currentPage = 1;
         applyFilters();
         document.querySelectorAll('.filter-dropdown').forEach(d => d.style.display = 'none');
     }
 
     function applyFilters() {
         const searchQuery = (document.getElementById('ticketSearch').value || '').trim().toLowerCase();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         document.querySelectorAll('tbody tr[data-title]').forEach(row => {
             const title = (row.getAttribute('data-title') || '').toLowerCase();
             const status = (row.getAttribute('data-status') || '').toLowerCase();
             const priority = (row.getAttribute('data-priority') || '').toLowerCase();
             const category = (row.getAttribute('data-category') || '').toLowerCase();
+            const submitter = (row.getAttribute('data-submitter') || '').toLowerCase();
+            const createdStr = row.getAttribute('data-created');
+
+            let matchesDate = true;
+            if (activeFilters.date && createdStr) {
+                const created = new Date(createdStr + 'T00:00:00');
+                if (activeFilters.date === 'today') {
+                    matchesDate = created.getTime() === today.getTime();
+                } else {
+                    const diffDays = (today - created) / 86400000;
+                    matchesDate = diffDays >= 0 && diffDays <= parseInt(activeFilters.date, 10);
+                }
+            }
 
             const matchesSearch = !searchQuery || title.includes(searchQuery);
             const matchesStatus = !activeFilters.status || status === activeFilters.status;
             const matchesPriority = !activeFilters.priority || priority === activeFilters.priority;
             const matchesCategory = !activeFilters.category || category === activeFilters.category;
+            const matchesSubmitter = !activeFilters.submitter || submitter === activeFilters.submitter;
 
-            row.style.display = (matchesSearch && matchesStatus && matchesPriority && matchesCategory) ? '' : 'none';
+            row.dataset.visible = (matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesSubmitter && matchesDate) ? '1' : '0';
         });
+
+        applyPagination();
     }
 
-    document.getElementById('ticketSearch').addEventListener('input', applyFilters);
+    function applyPagination() {
+        const allRows = Array.from(document.querySelectorAll('tbody tr[data-title]'));
+        const visibleRows = allRows.filter(r => r.dataset.visible !== '0');
+        const totalPages = Math.max(1, Math.ceil(visibleRows.length / pageSize));
+
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        allRows.forEach(r => r.style.display = 'none');
+        visibleRows.forEach((r, i) => {
+            r.style.display = (i >= (currentPage - 1) * pageSize && i < currentPage * pageSize) ? '' : 'none';
+        });
+
+        renderPager(totalPages);
+    }
+
+    function renderPager(totalPages) {
+        const el = document.getElementById('pagination');
+        el.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        for (let p = 1; p <= totalPages; p++) {
+            const btn = document.createElement('button');
+            btn.textContent = p;
+            btn.className = 'btn ' + (p === currentPage ? 'btn-primary' : 'btn-outline');
+            btn.style.minWidth = '36px';
+            btn.onclick = () => { currentPage = p; applyPagination(); };
+            el.appendChild(btn);
+        }
+
+        if (currentPage < totalPages) {
+            const next = document.createElement('button');
+            next.textContent = 'Next →';
+            next.className = 'btn btn-outline';
+            next.onclick = () => { currentPage++; applyPagination(); };
+            el.appendChild(next);
+        }
+    }
+
+    document.getElementById('ticketSearch').addEventListener('input', function () {
+        currentPage = 1;
+        applyFilters();
+    });
 
     document.addEventListener('click', function (e) {
         if (!e.target.closest('.filter-dropdown-wrap')) {
             document.querySelectorAll('.filter-dropdown').forEach(d => d.style.display = 'none');
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('tbody tr[data-title]').forEach(r => r.dataset.visible = '1');
+        applyPagination();
     });
 </script>

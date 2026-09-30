@@ -65,7 +65,7 @@
 
     @if (unread.Any())
     {
-        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">New</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Unread</div>
         <div class="card" style="padding:0; margin-bottom:24px;">
             @foreach (var n in unread)
             {
@@ -83,7 +83,17 @@
                             }
                         </div>
                     </div>
-                    <div style="width:8px; height:8px; border-radius:50%; background:var(--blue); margin-top:6px;"></div>
+                    <div class="notif-actions" style="display:flex; gap:6px; flex-shrink:0;">
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" style="display:inline;">
+                                <button type="submit" title="Mark as read" style="background:none; border:none; color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-check"></i></button>
+                            </form>
+                        }
+                        <form asp-action="DeleteOne" asp-route-id="@n.Id" method="post" style="display:inline;">
+                            <button type="submit" title="Delete" style="background:none; border:none;color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-trash"></i></button>
+                        </form>
+                    </div>
                 </div>
             }
         </div>
@@ -91,7 +101,7 @@
 
     @if (read.Any())
     {
-        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Earlier</div>
+        <div style="font-size:12px; font-weight:600; color:var(--text-gray); text-transform:uppercase; margin-bottom:10px;">Read</div>
         <div class="card" style="padding:0;">
             @foreach (var n in read)
             {
@@ -108,6 +118,17 @@
                                 <a asp-action="ViewTicket" asp-route-id="@n.Id" asp-route-ticketId="@n.TicketId" style="font-size:12px; color:var(--blue); text-decoration:none; font-weight:600;">View @n.TicketNumber</a>
                             }
                         </div>
+                    </div>
+                    <div class="notif-actions" style="display:flex; gap:6px; flex-shrink:0;">
+                        @if (!n.IsRead)
+                        {
+                            <form asp-action="MarkRead" asp-route-id="@n.Id" method="post" style="display:inline;">
+                                <button type="submit" title="Mark as read" style="background:none; border:none; color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-check"></i></button>
+                            </form>
+                        }
+                        <form asp-action="DeleteOne" asp-route-id="@n.Id" method="post" style="display:inline;">
+                            <button type="submit" title="Delete" style="background:none; border:none; color:var(--text-gray); cursor:pointer; padding:4px;"><i class="fa-solid fa-trash"></i></button>
+                        </form>
                     </div>
                 </div>
             }

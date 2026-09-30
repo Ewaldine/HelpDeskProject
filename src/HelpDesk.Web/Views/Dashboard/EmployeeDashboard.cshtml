@@ -54,7 +54,7 @@
             @foreach (var ticket in Model.RecentTickets)
             {
                 <tr>
-                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">@ticket.TicketNumber</a></td>
+                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">TKT-@ticket.Id.ToString().Substring(0, 8).ToUpper()</a></td>
                     <td>@ticket.Title</td>
                     <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
                     <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>
