@@ -1,55 +1,105 @@
-@model HelpDesk.Shared.DTOs.UserDto?
 @if (Model != null)
 {
-    <div class="sidebar-footer" style="justify-content: space-between; position:relative;">
-        <div style="display:flex; align-items:center; gap:12px; cursor:pointer; flex:1;" onclick="toggleProfileMenu(event)">
+    <div class="sidebar-footer">
+
+        <div id="profileTrigger"
+             class="profile-trigger"
+             onclick="toggleProfileMenu(event)">
+
             @if (!string.IsNullOrEmpty(Model.ProfilePhotoUrl))
             {
-                <img src="@Model.ProfilePhotoUrl" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0;" />
+                <img src="@Model.ProfilePhotoUrl"
+                     class="profile-image"
+                     alt="Profile" />
             }
             else
             {
-                <div class="user-avatar">@(string.Concat(Model.FirstName.FirstOrDefault(), Model.LastName.FirstOrDefault()).ToString().ToUpper())</div>
+                <div class="user-avatar">
+                    @(
+                        (
+                            (string.IsNullOrWhiteSpace(Model.FirstName)
+                                ? ""
+                                : Model.FirstName.Substring(0, 1))
+                            +
+                            (string.IsNullOrWhiteSpace(Model.LastName)
+                                ? ""
+                                : Model.LastName.Substring(0, 1))
+                        ).ToUpper()
+                    )
+                </div>
             }
+
             <div class="user-text">
-                <div class="user-name">@Model.FirstName @Model.LastName</div>
-                <div class="user-role">@Model.Role</div>
+
+                <div class="user-name">
+                    @Model.FirstName @Model.LastName
+                </div>
+
+                <div class="user-role">
+                    @Model.Role
+                </div>
+
             </div>
-        </div>
-        <a asp-controller="Account" asp-action="Logout" style="color:#94A3B8; font-size:16px;" title="Logout">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        </a>
 
-        <div id="profileMenu" style="display:none; position:absolute; bottom:100%; left:16px; margin-bottom:8px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.15); min-width:180px; overflow:hidden; z-index:200;">
-            <a asp-controller="Settings" asp-action="Index" style="display:flex; align-items:center; gap:10px; padding:12px 16px; color:var(--text-dark); text-decoration:none; font-size:14px; font-weight:500;"
-               onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
-                <i class="fa-solid fa-gear" style="width:16px; color:var(--text-gray);"></i> Settings
-            </a>
+            <div id="profileMenu" class="profile-menu">
+
+                <a asp-controller="Settings"
+                   asp-action="Index"
+                   class="profile-menu-item">
+
+                    <i class="fa-solid fa-gear"></i>
+
+                    <span>Settings</span>
+
+                </a>
+
+                <a asp-controller="Account"
+                   asp-action="Logout"
+                   class="profile-menu-item">
+
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+                    <span>Logout</span>
+
+                </a>
+
+            </div>
+
         </div>
 
-        <div id="profileMenu" style="display:none; position:absolute; bottom:100%; left:16px; margin-bottom:8px; background:white; border:1px solid var(--border); border-radius:8px; box-shadow:0 6px 16px rgba(0,0,0,0.15); min-width:180px; overflow:hidden; z-index:200;">
-            <a asp-controller="Settings" asp-action="Index" style="display:flex; align-items:center; gap:10px; padding:12px 16px; color:var(--text-dark); text-decoration:none; font-size:14px; font-weight:500;"
-               onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
-                <i class="fa-solid fa-gear" style="width:16px; color:var(--text-gray);"></i> Settings
-            </a>
-            <a asp-controller="Account" asp-action="Logout" style="display:flex; align-items:center; gap:10px; padding:12px 16px; color:var(--text-dark); text-decoration:none; font-size:14px; font-weight:500;"
-               onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='none'">
-                <i class="fa-solid fa-arrow-right-from-bracket" style="width:16px; color:var(--text-gray);"></i> Logout
-            </a>
-        </div>
     </div>
 
+
     <script>
+
         function toggleProfileMenu(e) {
+
             e.stopPropagation();
+
             const menu = document.getElementById('profileMenu');
-            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+
+            if (!menu) return;
+
+            menu.classList.toggle('profile-menu-open');
         }
+
+
         document.addEventListener('click', function(e) {
+
             const menu = document.getElementById('profileMenu');
-            if (menu && menu.style.display === 'block' && !e.target.closest('#profileMenu')) {
-                menu.style.display = 'none';
+
+            if (!menu) return;
+
+            if (
+                !e.target.closest('#profileMenu') &&
+                !e.target.closest('#profileTrigger')
+            ) {
+
+                menu.classList.remove('profile-menu-open');
+
             }
+
         });
+
     </script>
 }
