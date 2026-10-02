@@ -9,13 +9,25 @@
     </a>
 </div>
 
+@* Toast popup for TempData errors *@
+@if (TempData["ErrorMessage"] != null)
+{
+    <div id="toast-error" class="toast toast-error" role="alert" aria-live="assertive">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <div class="toast-content">@TempData["ErrorMessage"]</div>
+        <button type="button" class="toast-close" onclick="document.getElementById('toast-error')?.remove()">&times;</button>
+    </div>
+    <script>
+        (function(){
+            var t = document.getElementById('toast-error');
+            if(!t) return;
+            setTimeout(function(){ t.remove(); }, 6000);
+        })();
+    </script>
+}
+
 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px;">
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div style="background:var(--red-bg); border:1px solid #FECACA; color:var(--red); padding:14px 18px; border-radius:8px; margin-bottom:20px; font-size:14px;">
-            <i class="fa-solid fa-circle-exclamation"></i> @TempData["ErrorMessage"]
-        </div>
-    }
+    @* Error messages are shown as a toast popup to avoid shifting the page layout *@
     <div>
         <h1 class="page-title" style="margin-bottom:6px;">@Model.Ticket.Title</h1>
         <div style="color:var(--text-gray); font-size:14px;">TKT-@Model.Ticket.Id.ToString().Substring(0,8).ToUpper()</div>
@@ -101,6 +113,27 @@
     <!-- Right Column -->
     <div style="display:flex; flex-direction:column;">
 
+        <!-- Update Status (top-right compact card) -->
+        @if (Model.CanUpdateStatus && (Model.CanAssign || Model.CanUpdateStatus))
+        {
+            <div class="card make-div-auto" style="padding:16px 18px; margin-bottom:12px;">
+                <div style="font-size:11px; text-transform:uppercase; font-weight:600; color:var(--text-gray); letter-spacing:0.05em; margin-bottom:8px;">Update Status</div>
+
+                @* Always show full status list and submit on change *@
+                <form asp-action="UpdateStatus" asp-route-id="@Model.Ticket.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <select name="newStatus" onchange="this.form.submit()" style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:8px; background:white;">
+                        <option value="Open" selected='@(Model.Ticket.Status == "Open" ? "selected" : null)'>Open</option>
+                        <option value="InProgress" selected='@(Model.Ticket.Status == "InProgress" ? "selected" : null)'>In Progress</option>
+                        <option value="Resolved" selected='@(Model.Ticket.Status == "Resolved" ? "selected" : null)'>Resolved</option>
+                        <option value="Closed" selected='@(Model.Ticket.Status == "Closed" ? "selected" : null)'>Closed</option>
+                    </select>
+                </form>
+
+                @* Manual escalate removed. SLA escalation handled automatically. *@
+            </div>
+        }
+
         <!-- Ticket Details -->
         <div class="card make-div-auto">
             <div style="font-size:11px; text-transform:uppercase; font-weight:600; color:var(--text-gray); letter-spacing:0.05em; margin-bottom:16px;">Ticket Details</div>
@@ -138,14 +171,14 @@
                     <i class="fa-regular fa-clock" style="color:var(--text-gray); margin-top:2px; width:16px;"></i>
                     <div>
                         <div style="font-size:12px; color:var(--text-gray);">Last Updated</div>
-                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                        <div style="font-weight:600; font-size:14px; margin-top:2px;">@Model.Ticket.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy, hh:mm tt")</div>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- SLA Status -->
-        @{
+        @{ 
             var isOverdue = Model.Ticket.IsSlaBreach || Model.Ticket.ResolutionDueAt < DateTime.UtcNow;
         }
         <div class="card make-div-auto" style="@(isOverdue ? "background:#FEF2F2; border-color:#FECACA;" : "")">
@@ -156,7 +189,7 @@
             @if (isOverdue)
             {
                 <div style="font-size:24px; font-weight:700; color:var(--red);">Overdue</div>
-                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">Due: @Model.Ticket.ResolutionDueAt.ToString("MMM dd, yyyy, hh:mm tt")</div>
+                <div style="font-size:13px; color:var(--text-gray); margin-top:4px;">Due: @Model.Ticket.ResolutionDueAt.ToLocalTime().ToString("MMM dd, yyyy, hh:mm:ss tt")</div>
             }
             else
             {
@@ -167,67 +200,5 @@
                 </div>
             }
         </div>
-
-        <!-- Actions (for Technician/TeamLead/Admin only) -->
-        @if (Model.CanAssign || Model.CanUpdateStatus)
-        {
-            <div class="card make-div-auto">
-                <div class="card-title">Actions</div>
-                <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
-
-                    @if (Model.CanAssign)
-                    {
-                        <form asp-action="AssignToTechnician" asp-route-id="@Model.Ticket.Id" method="post" style="margin-bottom:4px;">
-                            <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Assign To</label>
-                            <select name="technicianId" style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:8px; background:white;" required>
-                                @foreach (var tech in Model.Technicians)
-                                {
-                                    <option value="@tech.Id">@tech.FirstName @tech.LastName</option>
-                                }
-                            </select>
-                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
-                                Assign Ticket
-                            </button>
-                        </form>
-                    }
-
-                    @if (Model.CanUpdateStatus && Model.Ticket.ValidNextStatuses.Any())
-                    {
-                        <form asp-action="UpdateStatus" asp-route-id="@Model.Ticket.Id" method="post">
-                            <select name="newStatus" style="width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:14px; margin-bottom:10px; background:white;">
-                                @foreach (var status in Model.Ticket.ValidNextStatuses)
-                                {
-                                    var label = status switch
-                                    {
-                                        "InProgress" => "In Progress",
-                                        _ => status
-                                    };
-                                    <option value="@status">@label</option>
-                                }
-                            </select>
-                            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
-                                Update Status
-                            </button>
-                        </form>
-                    }
-                    else if (Model.Ticket.Status == "Closed")
-                    {
-                        <div style="background:#F1F5F9; padding:12px 14px; border-radius:8px; font-size:13px; color:var(--text-gray);">
-                            <i class="fa-solid fa-lock"></i> This ticket is closed.
-                        </div>
-                    }
-
-                    @if (Model.CanUpdateStatus && Model.Ticket.Status != "Escalated" && Model.Ticket.Status != "Resolved" && Model.Ticket.Status != "Closed")
-                    {
-                        <form asp-action="Escalate" asp-route-id="@Model.Ticket.Id" method="post">
-                            <button type="submit" class="btn btn-outline" style="width:100%; justify-content:center; color:var(--red); border-color:#FECACA;">
-                                <i class="fa-solid fa-triangle-exclamation"></i> Escalate Ticket
-                            </button>
-                        </form>
-                    }
-
-                </div>
-            </div>
-        }
     </div>
 </div>

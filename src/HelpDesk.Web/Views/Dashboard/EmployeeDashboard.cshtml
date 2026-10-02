@@ -14,21 +14,21 @@
 </div>
 
 <div class="stats-row">
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#3B82F6;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">My Open Tickets</div>
             <div class="stat-value">@Model.OpenTicketCount</div>
         </div>
         <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
     </div>
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#16A34A;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">Resolved This Month</div>
             <div class="stat-value">@Model.ResolvedThisMonth</div>
         </div>
         <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
     </div>
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#9333EA;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">Avg Resolution Time</div>
             <div class="stat-value">@Model.AvgResolutionHours hrs</div>
@@ -54,7 +54,7 @@
             @foreach (var ticket in Model.RecentTickets)
             {
                 <tr>
-                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">@ticket.TicketNumber</a></td>
+                    <td><a class="ticket-link" href="@Url.Action("Details", "Tickets", new { id = ticket.Id })">TKT-@ticket.Id.ToString().Substring(0, 8).ToUpper()</a></td>
                     <td>@ticket.Title</td>
                     <td><span class="badge badge-@ticket.Status.ToLower().Replace(" ", "")">@ticket.Status</span></td>
                     <td><span class="badge badge-@ticket.Priority.ToLower()">@ticket.Priority</span></td>

@@ -1,6 +1,7 @@
 using HelpDesk.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using HelpDesk.Shared.DTOs;
 
 namespace HelpDesk.Web.Controllers;
 
@@ -19,5 +20,20 @@ public class CategoriesController : BaseController
         var token = await GetAccessTokenAsync();
         var categories = await _ticketApiService.GetCategoriesAsync(token);
         return View(categories);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
+            return BadRequest("Name required");
+
+        var token = await GetAccessTokenAsync();
+        var created = await _ticketApiService.CreateCategoryAsync(dto, token);
+
+        if (created == null)
+            return StatusCode(500, "Could not create category");
+
+        return Ok(created);
     }
 }

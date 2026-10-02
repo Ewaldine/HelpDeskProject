@@ -211,38 +211,14 @@ public TicketsController(
         return NoContent();
     }
 
-    [HttpPut("{id}/rate")]
-    [Authorize(Roles = "Employee,Admin")]
-    public async Task<ActionResult<TicketDto>> Rate(Guid id, [FromBody] int rating)
-    {
-        try
-        {
-            var ticket = await _ticketService.RateTicketAsync(id, rating);
-            return Ok(MapToDto(ticket));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (ArgumentOutOfRangeException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-    }
+
 
     [HttpPut("{id}/escalate")]
     [Authorize(Roles = "Technician,TeamLead,Admin")]
     public async Task<ActionResult<TicketDto>> Escalate(Guid id, [FromBody] EscalateTicketDto dto)
     {
-        try
-        {
-            var ticket = await _ticketService.EscalateTicketAsync(id, dto.EscalatedById);
-            return Ok(MapToDto(ticket));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        // Manual escalation endpoint has been disabled. SLA escalation is handled automatically by the system.
+        return BadRequest("Manual escalation is disabled. SLA escalation is handled automatically.");
     }
 
 
@@ -260,6 +236,7 @@ public TicketsController(
         AssignedToId = t.AssignedToId,
         SubmittedByName = t.SubmittedBy != null ? $"{t.SubmittedBy.FirstName} {t.SubmittedBy.LastName}" : null,
         AssignedToName = t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : null,
-        CategoryName = t.Category?.Name
+        CategoryName = t.Category?.Name,
+        ResolvedAt = t.ResolvedAt
     };
 }

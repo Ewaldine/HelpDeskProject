@@ -65,18 +65,12 @@ public class ReportsController : ControllerBase
             ? Math.Round(resolvedWithTimes.Average(t => (t.ResolvedAt!.Value - t.CreatedAt).TotalHours), 1)
             : 0;
 
-        var ratings = allTenantTickets.Where(t => t.SatisfactionRating.HasValue).ToList();
-        var avgSatisfaction = ratings.Any()
-            ? Math.Round(ratings.Average(t => t.SatisfactionRating!.Value), 1)
-            : 0;
-
         return Ok(new ReportsResultDto
         {
             WeeklyActivity = weeklyActivity,
             MonthlyTrend = monthlyTrend,
             ResolutionRate = resolutionRate,
             AvgResponseHours = avgResponseHours,
-            AvgSatisfaction = avgSatisfaction
         });
     }
     [HttpGet("admin-dashboard/{tenantId}")]
@@ -114,19 +108,27 @@ public class ReportsController : ControllerBase
                 Percent = totalForPriority > 0 ? (int)Math.Round((double)g.Count() / totalForPriority * 100) : 0
             }).ToList();
 
-        var technicianWorkload = await _context.Users
-            .Where(u => u.TenantId == tenantId && u.Role == HelpDesk.Core.Enums.UserRole.Technician && u.IsActive)
-            .Select(tech => new TechnicianWorkloadDto
-            {
-                Name = tech.FirstName + " " + tech.LastName,
-                AssignedTickets = tech.AssignedTickets.Count(t => t.Status != HelpDesk.Core.Enums.TicketStatus.Resolved && t.Status != HelpDesk.Core.Enums.TicketStatus.Closed),
-                ResolvedThisMonth = tech.AssignedTickets.Count(t =>
-                    t.Status == HelpDesk.Core.Enums.TicketStatus.Resolved &&
-                    t.ResolvedAt.HasValue &&
-                    t.ResolvedAt.Value.Month == DateTime.UtcNow.Month &&
-                    t.ResolvedAt.Value.Year == DateTime.UtcNow.Year)
-            })
+        var techUsers = await _context.Users
+    .Where(u => u.TenantId == tenantId && u.Role == HelpDesk.Core.Enums.UserRole.Technician && u.IsActive)
+    .ToListAsync();
+
+        var techTicketsAll = await _context.Tickets
+            .Where(t => t.TenantId == tenantId && t.AssignedToId != null)
+            .Select(t => new { t.AssignedToId, t.Status, t.CreatedAt, t.ResolvedAt })
             .ToListAsync();
+
+        var technicianWorkload = techUsers.Select(tech =>
+        {
+            var techTickets = techTicketsAll.Where(t => t.AssignedToId == tech.Id).ToList();
+            var resolvedWithTimes = techTickets.Where(t => t.ResolvedAt.HasValue).ToList();
+            return new TechnicianWorkloadDto
+            {
+                Name = $"{tech.FirstName} {tech.LastName}",
+                AssignedTickets = techTickets.Count(t => t.Status != HelpDesk.Core.Enums.TicketStatus.Resolved && t.Status != HelpDesk.Core.Enums.TicketStatus.Closed),
+                ResolvedThisMonth = techTickets.Count(t => t.Status == HelpDesk.Core.Enums.TicketStatus.Resolved && t.ResolvedAt.HasValue && t.ResolvedAt.Value.Month == DateTime.UtcNow.Month && t.ResolvedAt.Value.Year == DateTime.UtcNow.Year),
+                AvgResolutionHours = resolvedWithTimes.Any() ? Math.Round(resolvedWithTimes.Average(t => (t.ResolvedAt!.Value - t.CreatedAt).TotalHours), 1) : 0
+            };
+        }).ToList();
 
         return Ok(new AdminDashboardDto
         {
@@ -194,10 +196,12 @@ public class ReportsController : ControllerBase
             .Include(h => h.Ticket)
             .Where(h => h.Ticket.TenantId == tenantId)
             .OrderByDescending(h => h.CreatedAt)
-            .Take(6)
+            .Take(3)
             .Select(h => new TeamActivityDto
             {
-                Message = $"{h.ChangedByName} {h.Action.ToLower()} ticket #{h.Ticket.Id.ToString().Substring(0, 8)}",
+                Message = $"{h.ChangedByName} {h.Action.ToLower()} ticket #{h.Ticket.Id.ToString().Substring(0, 8).ToUpper()}",
+                Action = h.Action,
+                NewValue = h.NewValue,
                 CreatedAt = h.CreatedAt
             }).ToListAsync();
 
@@ -211,5 +215,35 @@ public class ReportsController : ControllerBase
             TeamWorkload = teamWorkload,
             RecentActivity = recentHistory
         });
+    }
+
+    [HttpGet("export/{tenantId}")]
+    public async Task<IActionResult> Export(Guid tenantId)
+    {
+        var tickets = await _context.Tickets
+            .Include(t => t.SubmittedBy)
+            .Include(t => t.AssignedTo)
+            .Include(t => t.Category)
+            .Where(t => t.TenantId == tenantId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Ticket,Title,Status,Priority,Category,SubmittedBy,AssignedTo,CreatedAt,ResolvedAt,SlaBreached");
+
+        string Csv(string? s) => "\"" + (s ?? "").Replace("\"", "\"\"") + "\"";
+
+        foreach (var t in tickets)
+        {
+            var ticketRef = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper();
+            sb.AppendLine(string.Join(",",
+                Csv(ticketRef), Csv(t.Title), Csv(t.Status.ToString()), Csv(t.Priority.ToString()),
+                Csv(t.Category?.Name),
+                Csv(t.SubmittedBy != null ? $"{t.SubmittedBy.FirstName} {t.SubmittedBy.LastName}" : ""),
+                Csv(t.AssignedTo != null ? $"{t.AssignedTo.FirstName} {t.AssignedTo.LastName}" : "Unassigned"),
+                Csv(t.CreatedAt.ToString("u")), Csv(t.ResolvedAt?.ToString("u") ?? ""), Csv(t.IsSlaBreach.ToString())));
+        }
+
+        return File(System.Text.Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", $"helpdesk-report-{DateTime.UtcNow:yyyyMMdd}.csv");
     }
 }

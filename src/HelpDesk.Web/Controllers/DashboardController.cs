@@ -46,7 +46,7 @@ public class DashboardController : BaseController
                     Initials = string.Concat(t.Name.Split(' ').Take(2).Select(n => n.FirstOrDefault())).ToUpper(),
                     AssignedTickets = t.AssignedTickets,
                     ResolvedThisMonth = t.ResolvedThisMonth,
-                    AvgResolutionHours = 3.5 // placeholder — calculated separately if needed
+                    AvgResolutionHours = t.AvgResolutionHours,
                 }).ToList() ?? new List<TechnicianWorkloadViewModel>()
             };
             return View("AdminDashboard", adminModel);
@@ -96,22 +96,22 @@ public class DashboardController : BaseController
                 {
                     Message = a.Message,
                     TimeAgo = GetTimeAgo(a.CreatedAt),
-                    IconType = "updated"
+                    IconType = MapActivityIcon(a.Action, a.NewValue)
                 }).ToList() ?? new List<TeamActivityViewModel>()
             };
-            return View("TeamLeadDashboard", teamLeadModel);
             teamLeadModel.Technicians = await _ticketApiService.GetTechniciansAsync(TenantId, token);
-
             return View("TeamLeadDashboard", teamLeadModel);
+
         }
 
         if (User.IsInRole("Technician"))
         {
-            var currentUser = await GetCurrentUserAsync(token);
+            var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
             var allTicketsForTech = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
             var myAssigned = currentUser != null
-                ? allTicketsForTech.Where(t => t.AssignedToName == $"{currentUser.FirstName} {currentUser.LastName}").ToList()
+                ? allTicketsForTech.Where(t => t.AssignedToId == currentUser.Id
+                    && t.Status != "Resolved" && t.Status != "Closed").ToList()
                 : new List<HelpDesk.Shared.DTOs.TicketDto>();
 
             var techModel = new TechnicianDashboardViewModel
@@ -120,11 +120,11 @@ public class DashboardController : BaseController
                 ResolvedToday = myAssigned.Count(t => t.Status == "Resolved"),
                 AvgResponseTime = "23 min",
                 TicketQueue = myAssigned
-                    .OrderByDescending(t => t.Priority)
+                    .OrderByDescending(t => t.Priority switch { "Critical" => 4, "High" => 3, "Medium" => 2, "Low" => 1, _ => 0 })
                     .Select(t => new TechnicianTicketRowViewModel
                     {
                         Id = t.Id,
-                        TicketNumber = "#" + t.Id.ToString().Substring(0, 8),
+                        TicketNumber = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper(),
                         Title = t.Title,
                         Priority = t.Priority,
                         Status = t.Status,
@@ -155,7 +155,8 @@ public class DashboardController : BaseController
 
         var resolvedThisMonth = myTickets.Count(t =>
             t.Status == "Resolved" &&
-            t.CreatedAt.Month == DateTime.UtcNow.Month &&
+            t.ResolvedAt.HasValue &&
+            t.CreatedAt.Month == DateTime.UtcNow.Month &&   
             t.CreatedAt.Year == DateTime.UtcNow.Year);
 
         var model = new EmployeeDashboardViewModel
@@ -169,7 +170,7 @@ public class DashboardController : BaseController
                 .Select(t => new TicketRowViewModel
                 {
                     Id = t.Id,
-                    TicketNumber = "#" + t.Id.ToString().Substring(0, 8),
+                    TicketNumber = "TKT-" + t.Id.ToString().Substring(0, 8).ToUpper(),
                     Title = t.Title,
                     Status = t.Status,
                     Priority = t.Priority,
@@ -195,5 +196,16 @@ public class DashboardController : BaseController
         if (span.TotalHours < 24) return $"{(int)span.TotalHours} hr{((int)span.TotalHours == 1 ? "" : "s")} ago";
         return $"{(int)span.TotalDays} day{((int)span.TotalDays == 1 ? "" : "s")} ago";
     }
+
+    private static string MapActivityIcon(string action, string? newValue) => action switch
+    {
+        "Created" => "assigned",
+        "Assigned" => "assigned",
+        "Escalated" => "escalated",
+        "AutoEscalated" => "escalated",
+        "StatusChanged" when newValue == "Resolved" => "resolved",
+        "StatusChanged" => "updated",
+        _ => "updated"
+    };
 }
 

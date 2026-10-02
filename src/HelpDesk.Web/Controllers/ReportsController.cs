@@ -22,4 +22,11 @@ public class ReportsController : BaseController
 
         return View(reports ?? new HelpDesk.Shared.DTOs.ReportsResultDto());
     }
+
+    public async Task<IActionResult> Export()
+    {
+        var token = await GetAccessTokenAsync();
+        var bytes = await _ticketApiService.ExportReportAsync(TenantId, token);
+        return File(bytes, "text/csv", $"helpdesk-report-{DateTime.UtcNow:yyyyMMdd}.csv");
+    }
 }

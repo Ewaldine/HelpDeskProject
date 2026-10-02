@@ -8,7 +8,7 @@
         <h1 class="page-title">Reports & Analytics</h1>
         <p class="page-subtitle">Track ticket trends and team performance.</p>
     </div>
-    <button class="btn btn-outline"><i class="fa-solid fa-download"></i> Export Report</button>
+    <a asp-action="Export" class="btn btn-outline"><i class="fa-solid fa-download"></i> Export Report</a>
 </div>
 
 <div class="stats-row">
@@ -25,13 +25,6 @@
             <div class="stat-value">@Model.AvgResponseHours hrs</div>
         </div>
         <div class="stat-icon purple"><i class="fa-solid fa-arrow-trend-up"></i></div>
-    </div>
-    <div class="stat-card">
-        <div>
-            <div class="stat-label">Customer Satisfaction</div>
-            <div class="stat-value">@Model.AvgSatisfaction/5</div>
-        </div>
-        <div class="stat-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
     </div>
 </div>
 

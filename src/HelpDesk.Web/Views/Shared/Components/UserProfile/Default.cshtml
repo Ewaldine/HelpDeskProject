@@ -1,0 +1,105 @@
+@if (Model != null)
+{
+    <div class="sidebar-footer">
+
+        <div id="profileTrigger"
+             class="profile-trigger"
+             onclick="toggleProfileMenu(event)">
+
+            @if (!string.IsNullOrEmpty(Model.ProfilePhotoUrl))
+            {
+                <img src="@Model.ProfilePhotoUrl"
+                     class="profile-image"
+                     alt="Profile" />
+            }
+            else
+            {
+                <div class="user-avatar">
+                    @(
+                        (
+                            (string.IsNullOrWhiteSpace(Model.FirstName)
+                                ? ""
+                                : Model.FirstName.Substring(0, 1))
+                            +
+                            (string.IsNullOrWhiteSpace(Model.LastName)
+                                ? ""
+                                : Model.LastName.Substring(0, 1))
+                        ).ToUpper()
+                    )
+                </div>
+            }
+
+            <div class="user-text">
+
+                <div class="user-name">
+                    @Model.FirstName @Model.LastName
+                </div>
+
+                <div class="user-role">
+                    @Model.Role
+                </div>
+
+            </div>
+
+            <div id="profileMenu" class="profile-menu">
+
+                <a asp-controller="Settings"
+                   asp-action="Index"
+                   class="profile-menu-item">
+
+                    <i class="fa-solid fa-gear"></i>
+
+                    <span>Settings</span>
+
+                </a>
+
+                <a asp-controller="Account"
+                   asp-action="Logout"
+                   class="profile-menu-item">
+
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+
+                    <span>Logout</span>
+
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script>
+
+        function toggleProfileMenu(e) {
+
+            e.stopPropagation();
+
+            const menu = document.getElementById('profileMenu');
+
+            if (!menu) return;
+
+            menu.classList.toggle('profile-menu-open');
+        }
+
+
+        document.addEventListener('click', function(e) {
+
+            const menu = document.getElementById('profileMenu');
+
+            if (!menu) return;
+
+            if (
+                !e.target.closest('#profileMenu') &&
+                !e.target.closest('#profileTrigger')
+            ) {
+
+                menu.classList.remove('profile-menu-open');
+
+            }
+
+        });
+
+    </script>
+}

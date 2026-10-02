@@ -24,21 +24,25 @@ public class TicketsController : BaseController
     {
         var token = await GetAccessTokenAsync();
         var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-
         var allTickets = await _ticketApiService.GetByTenantAsync(TenantId, token);
 
-        var myTickets = currentUser != null
-            ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList()
-            : new List<HelpDesk.Shared.DTOs.TicketDto>();
+        List<HelpDesk.Shared.DTOs.TicketDto> myTickets;
+        string subtitle;
 
-        var model = new TicketListViewModel
+        if (User.IsInRole("Technician") || User.IsInRole("TeamLead"))
         {
-            PageTitle = "My Tickets",
-            PageSubtitle = "Tickets you've submitted",
-            Tickets = myTickets
-        };
+            myTickets = currentUser != null
+                ? allTickets.Where(t => t.SubmittedById == currentUser.Id || t.AssignedToId == currentUser.Id).ToList()
+                : new();
+            subtitle = "Tickets you've submitted or that are assigned to you";
+        }
+        else
+        {
+            myTickets = currentUser != null ? allTickets.Where(t => t.SubmittedById == currentUser.Id).ToList() : new();
+            subtitle = "Tickets you've submitted";
+        }
 
-        return View("TicketList", model);
+        return View("TicketList", new TicketListViewModel { PageTitle = "My Tickets", PageSubtitle = subtitle, Tickets = myTickets, ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead") });
     }
 
     public async Task<IActionResult> AssignedToMe()
@@ -63,24 +67,22 @@ public class TicketsController : BaseController
     }
 
     [HttpPost]
-    public async Task<IActionResult> AssignToTechnician(Guid id, Guid technicianId)
+public async Task<IActionResult> AssignToTechnician(Guid id, Guid technicianId)
+{
+    var token = await GetAccessTokenAsync();
+    var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
+
+    if (currentUser != null)
     {
-        var token = await GetAccessTokenAsync();
-        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-
-        if (currentUser != null)
-        {
-            var dto = new AssignTicketDto
-            {
-                TechnicianId = technicianId,
-                AssignedById = currentUser.Id
-            };
-
-            await _ticketApiService.AssignAsync(id, dto, token);
-        }
-
-        return RedirectToAction("UnassignedQueue");
+        var dto = new AssignTicketDto { TechnicianId = technicianId, AssignedById = currentUser.Id };
+        var result = await _ticketApiService.AssignAsync(id, dto, token);
+        if (!result.Success)
+            TempData["ErrorMessage"] = result.ErrorMessage ?? "Failed to assign ticket.";
     }
+
+    var referer = Request.Headers["Referer"].ToString();
+    return Redirect(!string.IsNullOrEmpty(referer) ? referer : Url.Action("Index", "Dashboard")!);
+}
 
 
     public async Task<IActionResult> UnassignedQueue()
@@ -100,7 +102,8 @@ public class TicketsController : BaseController
             PageTitle = "Unassigned Queue",
             PageSubtitle = "Tickets awaiting technician assignment",
             Tickets = unassigned,
-            Technicians = technicians
+            Technicians = technicians,
+            ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead"),
         };
 
         return View("UnassignedQueue", model);
@@ -114,7 +117,8 @@ public class TicketsController : BaseController
         {
             PageTitle = "All Tickets",
             PageSubtitle = "Every ticket in the organization",
-            Tickets = tickets
+            Tickets = tickets,
+            ShowSubmitterFilter = User.IsInRole("Technician") || User.IsInRole("TeamLead"),
         };
 
         return View("TicketList", model);
@@ -189,6 +193,28 @@ public class TicketsController : BaseController
         dto.SubmittedById = currentUser.Id;
         Console.WriteLine($"[DEBUG] Create ticket - submitting with dto: {dto.Title}, {dto.Priority}, {dto.CategoryId}");
 
+        // Prevent near-duplicate submissions: check for a ticket with same title/description by this user in the last 5 seconds
+        try
+        {
+            var recent = await _ticketApiService.GetByTenantAsync(TenantId, token);
+            var duplicate = recent.FirstOrDefault(t =>
+                t.SubmittedById == currentUser.Id
+                && string.Equals(t.Title ?? string.Empty, dto.Title ?? string.Empty, StringComparison.Ordinal)
+                && string.Equals(t.Description ?? string.Empty, dto.Description ?? string.Empty, StringComparison.Ordinal)
+                && (DateTime.UtcNow - t.CreatedAt).TotalSeconds <= 5);
+
+            if (duplicate != null)
+            {
+                Console.WriteLine($"[DEBUG] Create ticket - duplicate detected, returning existing ticket {duplicate.Id}");
+                return Ok(duplicate);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: if duplicate check fails, continue to create the ticket but log for diagnostics
+            Console.WriteLine($"[WARN] Duplicate check failed: {ex.Message}");
+        }
+
         var ticket = await _ticketApiService.CreateAsync(TenantId, dto, token);
         Console.WriteLine($"[DEBUG] Create ticket - result: {(ticket == null ? "NULL" : ticket.Id.ToString())}");
 
@@ -244,24 +270,7 @@ public class TicketsController : BaseController
         return RedirectToAction("Details", new { id });
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Escalate(Guid id)
-    {
-        var token = await GetAccessTokenAsync();
-        var currentUser = await GetCurrentUserAsync(_ticketApiService, token);
-
-        if (currentUser != null)
-        {
-            var result = await _ticketApiService.EscalateAsync(id, currentUser.Id, token);
-
-            if (!result.Success)
-            {
-                TempData["ErrorMessage"] = result.ErrorMessage;
-            }
-        }
-
-        return RedirectToAction("Details", new { id });
-    }
+    // Manual escalate action removed. SLA escalation is handled automatically by the system.
 
 
     private async Task<UserDto?> GetCurrentUserAsync(string token)

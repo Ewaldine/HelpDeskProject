@@ -14,28 +14,28 @@
 </div>
 
 <div class="stats-row">
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#3B82F6;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">Total Open Tickets</div>
             <div class="stat-value">@Model.TotalOpenTickets</div>
         </div>
         <div class="stat-icon blue"><i class="fa-solid fa-ticket"></i></div>
     </div>
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#EF4444;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">SLA Breaches (Week)</div>
             <div class="stat-value">@Model.SlaBreachesWeek</div>
         </div>
         <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
     </div>
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#16A34A;">
+    <div class="stat-card">
         <div>
             <div class="stat-label">Total Resolved</div>
             <div class="stat-value">@Model.TotalResolved</div>
         </div>
         <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
     </div>
-    <div class="stat-card" style="border-left-width: 7px; border-left-color:#9333EA;">
+    <div class="stat-card" >
         <div>
             <div class="stat-label">Active Technicians</div>
             <div class="stat-value">@Model.ActiveTechnicians</div>
@@ -45,19 +45,19 @@
 </div>
 
 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
-    <div class="card">
-        <div class="card-title" >Tickets by Category</div>
-        <canvas id="categoryChart" height="150"></canvas>
+    <div class="card" style="height: auto;">
+        <div class="card-title">Tickets by Category</div>
+        <canvas id="categoryChart"></canvas>
     </div>
-    <div class="card">
+    <div class="card" style="height: 400px; align-content: center">
         <div class="card-title" style="margin-bottom:-10px; justify-content: center;">Tickets by Priority</div>
-        <canvas id="priorityChart" height="250"></canvas>
+        <canvas id="priorityChart"></canvas>
     </div>
 </div>
 
-<div class="card card make-div-auto">
+<div class="card make-div-auto">
     <div class="card-title">Technician Workload</div>
-    <table>
+    <table class="tickets-table">
         <thead>
             <tr>
                 <th>Technician</th>
