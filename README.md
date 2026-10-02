@@ -1,20 +1,34 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+This ensures business logic in `Core` never depends on how data is stored or how the API is exposed — the database or frontend could be swapped without touching domain logic.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+---
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+## Tech Stack
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+| Layer | Technology |
+|---|---|
+| Frontend | ASP.NET Core MVC, Razor Views, vanilla JS |
+| Backend API | ASP.NET Core Web API |
+| Database | SQL Server, Entity Framework Core |
+| Authentication | Keycloak (OpenID Connect + JWT Bearer) |
+| Background Jobs | Hangfire |
+| Observability | OpenTelemetry, Prometheus, Grafana |
+| Containerization | Docker Compose (Keycloak, Redis, Prometheus, Loki, Tempo, Grafana) |
+| Charting | Chart.js |
+
+---
+
+## Key Features
+
+- **Full ticket lifecycle** with a proper state machine (Open → Assigned → In Progress → Resolved → Closed), including validated transitions and re-opening
+- **SLA engine** — automatic breach detection via a Hangfire recurring job that checks resolution deadlines every few minutes
+- **Escalation** — manual escalation by staff, or automatic escalation on SLA breach; escalating a ticket raises its priority and flags it for review
+- **Role-based dashboards** — Employee, Technician, Team Lead, and Admin each see a purpose-built dashboard with real data
+- **Role-based data visibility** — internal notes on tickets are hidden from Employees but visible to staff, enforced at both the API and UI layer
+- **Audit trail** — every status change, assignment, and escalation is recorded in an immutable history table
+- **Real analytics** — Reports dashboard with live SQL aggregation (resolution rate, weekly/monthly trends, satisfaction score)
+- **Full observability** — three Grafana dashboards: Executive (SQL-based business metrics), Technician (workload), and Operations (Prometheus-based system health)
+
+---
+
+## Project Structure
