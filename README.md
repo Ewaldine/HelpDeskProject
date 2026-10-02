@@ -1,4 +1,73 @@
+# HelpDesk Pro — Internal IT Ticketing System
 
+An enterprise-grade internal help desk and ticketing system built as a Final Mini Project for the Standard Bank Namibia Software Development Internship. HelpDesk Pro simulates a real-world IT support platform similar to Jira Service Management or Zendesk, with role-based dashboards, SLA automation, and full observability.
+
+## Table of Contents
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Tech Stack](#tech-stack)
+- [Key Features](#key-features)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Roles & Permissions](#roles--permissions)
+- [Observability](#observability)
+- [Known Limitations & Future Work](#known-limitations--future-work)
+
+---
+
+## Overview
+
+Employees can raise IT support tickets (hardware, software, network, access, email issues). Technicians pick up and resolve tickets. Team Leads manage assignment and team workload. Admins have full oversight with organization-wide analytics.
+
+The system enforces a real ticket lifecycle with SLA deadlines, automatic breach detection via background jobs, escalation rules, and role-based data visibility (e.g. internal notes are hidden from the ticket requester).
+
+---
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Frontend"
+        Web[HelpDesk.Web<br/>ASP.NET Core MVC]
+    end
+
+    subgraph "Backend"
+        API[HelpDesk.API<br/>REST API]
+        Core[HelpDesk.Core<br/>Domain Models & Interfaces]
+        Infra[HelpDesk.Infrastructure<br/>EF Core, Repositories, Services]
+        Shared[HelpDesk.Shared<br/>DTOs]
+    end
+
+    subgraph "Data & Auth"
+        DB[(SQL Server<br/>HelpDeskDb)]
+        Keycloak[Keycloak<br/>Identity Provider]
+    end
+
+    subgraph "Observability"
+        OTel[OpenTelemetry]
+        Prom[Prometheus]
+        Grafana[Grafana Dashboards]
+    end
+
+    subgraph "Background Jobs"
+        Hangfire[Hangfire<br/>SLA Engine]
+    end
+
+    Web -->|HTTP + JWT| API
+    Web -->|OIDC Login| Keycloak
+    API -->|JWT Validation| Keycloak
+    API --> Core
+    API --> Infra
+    API --> Shared
+    Infra --> DB
+    Hangfire --> DB
+    API --> OTel
+    OTel --> Prom
+    Prom --> Grafana
+    DB --> Grafana
+```
+
+**Clean Architecture layering:**
 This ensures business logic in `Core` never depends on how data is stored or how the API is exposed — the database or frontend could be swapped without touching domain logic.
 
 ---
